@@ -1,0 +1,15 @@
+{
+    "data":"",
+    "status":"",
+    "statusCode":"",
+    "error": {
+        "code": "RESOURCE_NOT_FOUND",
+        "message": "The requested resource was not found.",
+        "details": "The user with the ID '12345' does not exist in our records.",
+        "timestamp": "2023-12-08T12:30:45Z",
+        "path": "/api/v1/users/12345",
+        "suggestion": "Please check if the user ID is correct or refer to our documentation at https://api.example.com/docs/errors#RESOURCE_NOT_FOUND for more information."
+    },
+  "requestId": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+  "documentation_url": "https://api.example.com/docs/errors"
+}

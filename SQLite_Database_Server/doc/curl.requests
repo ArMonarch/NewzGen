@@ -1,0 +1,28 @@
+  curl 'https://www.nepalstock.com/api/nots/nepse-data/floorsheet?&sort=contractId,desc' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'accept-language: en-GB,en;q=0.9,de-AT;q=0.8,de;q=0.7,en-US;q=0.6' \
+  -H 'authorization: Salter eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..6R7r7MWtcpa2xx4rb70OBw.nWUUtdCcsRG_A_OkmdYgplFcxPNPAdZ0axh6ry-gurLzvVfvdRR419aUgzGVjT5mcd86Qdg2qtlsOTYxOrM50F8_cQ7V3SQ0iYfsICMJtKZno1vDUH_RGHObdXD3MdvrD6b5eojJ-KHfStdtmZETPw.MfsHoSqsDoqscOty55lp5Q' \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'dnt: 1' \
+  -H 'origin: https://www.nepalstock.com' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://www.nepalstock.com/floor-sheet' \
+  -H 'sec-ch-ua: "Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'sec-gpc: 1' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36' \
+  --data-raw '{"id":458919}'
+
+curl -X POST 'http://127.0.0.1:9000/api/add/article' \
+-H 'content-type: application/json' \
+--data-raw '{"id":1200,"type":"article","author":"Prafful Raj Thapa,Ar_FrenzFries","title":"How to Make ???","topics":"Technology,Science","body":"ajhkfjksahfiaiflhalwifhalwh fe3fahwf aifh aiu fiakh", "publisheddate":"2023-12-08T12:30:45Z", "source":"BBC", "summarized-status":"False"}'
+
+curl -X POST 'http://127.0.0.1:9000/api/add/article' \
+-H 'content-type: application/json' \
+--data-raw '{"type":"article","authors":"Prafful Raj Thapa,Ar_FrenzFries","title":"How to Make ???","topics":"Technology,Science","body":"ajhkfjksahfiaiflhalwifhalwh fe3fahwf aifh aiu fiakh", "publisheddate":"2023-12-08T12:30:45Z", "source":"BBC", "summarized_status":"False"}'
