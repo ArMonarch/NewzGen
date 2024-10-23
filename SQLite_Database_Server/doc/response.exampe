@@ -13,3 +13,46 @@
   "requestId": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
   "documentation_url": "https://api.example.com/docs/errors"
 }
+
+
+from pydantic import BaseModel
+from datetime import datetime, timezone
+
+class Response:
+    def __init__(self):
+
+        currentTime = datetime.now(timezone.utc)
+        formattedTimestamp = currentTime.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        self.value = {
+            "data":"",
+            "status":"",
+            "statusCode":"",
+            "error": {
+                "code": "",
+                "message": "",
+                "details": "",
+                "timestamp": formattedTimestamp,
+                "path": "",
+                "suggestion": ""
+            },
+            "requestId": "NULL",
+            "documentation_url": "NULL"
+        }
+    
+    def __str__(self):
+        return f'status : {self.value['status']}\nstatusCode : {self.value['statusCode']}\ndata : {self.value['data']}\nerror : {self.value['error']}\nrequestId : {self.value['requestId']}\ndocumentation_url : {self.value['documentation_url']}'
+    
+    def __repr__(self):
+        return self.value
+
+def main() -> None:
+    # response =  Response()
+    # print(response)
+    # return
+    sqlquery = 'dadadawdaw awdaw dad adaw dqd {type}'
+    sqlquery = sqlquery.replace("{type}","hello",1)
+    print(sqlquery)
+
+if __name__ == "__main__":
+    main()
