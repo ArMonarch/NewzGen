@@ -18,6 +18,7 @@ CREATE_ARTICLE_TABLE = '''
         Body TEXT,
         PublishedDate TEXT,
         Source TEXT,
+        Url TEXT,
         Summarized_Status BOOL
     );
 '''
@@ -41,12 +42,7 @@ INSERT_ARTICLE_WITH_ID = '''
     VALUES ({id}, {type}, {authors}, {title}, {topics}, {body}, {publisheddate}, {source}, {summarized_status});
 '''
 
-# INSERT_ARTICLE_WITHOUT_ID = '''
-#     INSERT INTO TABLE Articles (Type, Authors, Title, Topics, Body, PublishedDate, Source, Summarized_Status)
-#     VALUES ('{type}', '{authors}', '{title}', '{topics}', '{body}', '{publisheddate}', '{source}', {summarized_status});
-# '''
-
 INSERT_ARTICLE_WITHOUT_ID = '''
-    INSERT INTO Article (Type, Authors, Title, Topics, Body, PublishedDate, Source, Summarized_Status)
-    VALUES (:type, :authors, :title, :topics, :body, :publisheddate, :source, :summarized_status);
+    INSERT INTO Articles (Type, Authors, Title, Topics, Body, PublishedDate, Source, Url, Summarized_Status)
+    VALUES (:type, :authors, :title, :topics, :body, :publisheddate, :source, :url, :summarized_status);
 '''

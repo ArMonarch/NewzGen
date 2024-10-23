@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from typing import Dict
 import json
 import sqlite3
 from sqlite3 import OperationalError
@@ -18,8 +19,8 @@ def hello():
 def Article_Insert():
     if request.method == 'POST':
         try:
-            ArticleData = dict(json.loads(request.data))
-            if ArticleData['type'] != "" and ArticleData['authors'] == "" and ArticleData['topics'] == "" and ArticleData['body'] == "" and ArticleData['publisheddate'] == ""  and ArticleData['source'] == "" and ArticleData['summarized_status'] == "":            
+            ArticleData:Dict = dict(json.loads(request.data))
+            if ArticleData['type'] == "" and ArticleData['authors'] == "" and ArticleData['topics'] == "" and ArticleData['body'] == "" and ArticleData['publisheddate'] == ""  and ArticleData['source'] == "" and ArticleData['url'] == "" and ArticleData['summarized_status'] == "":            
                 print("Some of the Data Fields are missing!!")
                 return "400"
 
@@ -27,6 +28,7 @@ def Article_Insert():
             cursor = DatabaseConnection.cursor()
 
             try:
+                print(ArticleData)
                 cursor.execute(INSERT_ARTICLE_WITHOUT_ID, ArticleData)
             
             except OperationalError:
