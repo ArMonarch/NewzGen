@@ -1,3 +1,9 @@
 from NewsScrapper.BBC import BBC
 
-BBC1 = BBC()
+def main() -> None:
+    bbc = BBC()
+    bbc.getArticles(5)
+    return
+
+if __name__ == "__main__":
+    main()
