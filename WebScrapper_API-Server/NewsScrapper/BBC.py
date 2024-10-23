@@ -79,9 +79,9 @@ class BBC():
 
     def __init__(self):
 
-        self.query = {"country":"np","page":3,"size":1}
+        self.query = {"country":"np","page":0,"size":1}
 
-    def getArticle(self) -> Article | None:
+    def getArticle(self) -> Article:
         
         self.query['size'] = 1
         url = Url(self.BBC_Technology_News_API, self.query)
@@ -106,10 +106,10 @@ class BBC():
         #     DictData.update({"type":list([data.get('type'), data.get('subtype')]), "source":self.SOURCE, "url":self.BASEURL + data.get('path'), "title":data.get('title'), "topics":list(data.get('topics')), "publishedAt":data.get('lastPublishedAt')})
         #     article = Article(DictData)
 
-        return
+        return article
 
     
-    def getArticles(self, noOfArticles) -> List[Article] | None:
+    def getArticles(self, noOfArticles=1) -> List[Article]:
         self.query['size'] = noOfArticles
         url = Url(self.BBC_Technology_News_API, self.query)
         request = requests.get(url=url)
@@ -123,11 +123,11 @@ class BBC():
             DictData.update({"type":list([data.get('type'), data.get('subtype')]), "source":self.SOURCE, "url":self.BASEURL + data.get('path'), "title":data.get('title'), "topics":list(data.get('topics')), "publishedAt":data.get('lastPublishedAt')})
             listOfArticles.append(Article(DictData))
         
-        with open('ScrappedNews5(4).txt','w') as News:
-            for article in listOfArticles:
-                News.write(str(article) + '\n')
+        # with open('ScrappedNews5(4).txt','w') as News:
+        #     for article in listOfArticles:
+        #         News.write(str(article) + '\n')
 
-        return
+        return listOfArticles
     
     def getLatestArticles(self) -> List[Dict]:
         return
