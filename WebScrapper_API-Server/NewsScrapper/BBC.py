@@ -1,6 +1,7 @@
 import requests
 from typing import List, Dict
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 class Url():
     
@@ -87,6 +88,9 @@ class BBC():
         url = Url(self.BBC_Technology_News_API, self.query)
         request = requests.get(url=url)
 
+        if request.status_code != 200:
+            raise  Exception("Fetching Data Failed")
+
         # request = dict(request.json())
         # request = list(request.get('data'))
         # request = request.pop()
@@ -113,6 +117,10 @@ class BBC():
         self.query['size'] = noOfArticles
         url = Url(self.BBC_Technology_News_API, self.query)
         request = requests.get(url=url)
+        
+        if request.status_code != 200:
+            raise  Exception("Fetching Data Failed")
+        
         request = dict(request.json()).get('data')
 
         listOfArticles: List[Article] | List[None] = []  
@@ -123,7 +131,9 @@ class BBC():
             DictData.update({"type":list([data.get('type'), data.get('subtype')]), "source":self.SOURCE, "url":self.BASEURL + data.get('path'), "title":data.get('title'), "topics":list(data.get('topics')), "publishedAt":data.get('lastPublishedAt')})
             listOfArticles.append(Article(DictData))
         
-        with open('ScrappedNews5(4).txt','w') as News:
+        currentDate = datetime.today()
+        
+        with open(f'ScrappedNews{currentDate}.txt','w') as News:
             for article in listOfArticles:
                 News.write(str(article) + '\n')
 
