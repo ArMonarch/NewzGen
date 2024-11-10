@@ -46,3 +46,15 @@ INSERT_ARTICLE_WITHOUT_ID = '''
     INSERT INTO Articles (Type, Authors, Title, Topics, Body, PublishedDate, Source, Url, Summarized_Status)
     VALUES (:type, :authors, :title, :topics, :body, :publisheddate, :source, :url, :summarized_status);
 '''
+
+GET_ARTICLE_WITH_ID = '''
+    SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source, Url, Summarized_Status
+    FROM Articles
+    WHERE Id = :articleId;
+'''
+
+GET_SUMMARY_WITH_ID = '''
+    SELECT Id, Article_Id, LLM_Used, Generated_Summary
+    from Articlez_Summaries
+    WHERE Id = :summaryId;
+'''
