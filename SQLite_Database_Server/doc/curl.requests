@@ -26,3 +26,6 @@ curl -X POST 'http://127.0.0.1:9000/api/add/article' \
 curl -X POST 'http://127.0.0.1:9000/api/add/article' \
 -H 'content-type: application/json' \
 --data-raw '{"type":"article","authors":"Prafful Raj Thapa,Ar_FrenzFries","title":"How to Make ???","topics":"Technology,Science","body":"ajhkfjksahfiaiflhalwifhalwh fe3fahwf aifh aiu fiakh", "publisheddate":"2023-12-08T12:30:45Z", "source":"BBC", "url":"https://bbc.com//future/article/20241018-ai-art-the-end-of-creativity-or-a-new-movement", "summarized_status":"False"}'
+
+curl -X GET 'http://127.0.0.1:9000/api/get/article?articleId=1' \
+-H 'content-type: application/json'
