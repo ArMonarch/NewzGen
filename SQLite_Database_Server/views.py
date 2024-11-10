@@ -66,15 +66,15 @@ def getArticle():
 
     try:
         Article = cursor.execute(GET_ARTICLE_WITH_ID,{'articleId':ArticleId})
-        ID, TYPE, AUTHOR, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
+        ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
         
         cursor.close()
         databaseConnection.close()
         
         
-        ArticleData = dict({'id':ID,'type':TYPE,'author':AUTHOR,'title':TITLE,'topics':TOPICS,'body':BODY,'publishedDate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarizedStatus':SUMMARIZEDSTATUS})
+        ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publishedDate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarizedStatus':SUMMARIZEDSTATUS})
                 
-        return ArticleData
+        return ARTICLE
     except:
         print("An Unecpected error occured while getting data from Database")
         return '400'
