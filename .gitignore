@@ -59,7 +59,7 @@ cover/
 # Django stuff:
 *.log
 local_settings.py
-# db.sqlite3 do not include db.sqlite as it contains stocks data in out project
+# db.sqlite3 do not include db.sqlite as it contains News data in out project
 db.sqlite3-journal
 
 # Flask stuff:
@@ -156,7 +156,7 @@ dmypy.json
 cython_debug/
 
 # txt files of Scrapped News
-.txt
+*.txt
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
