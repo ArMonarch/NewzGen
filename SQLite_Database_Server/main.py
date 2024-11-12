@@ -34,4 +34,4 @@ def main() -> None:
 if __name__ == "__main__":
 
     main()
-    app.run(port='9000',debug=True)
+    app.run(port='9200',debug=True)
