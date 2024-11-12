@@ -75,7 +75,6 @@ def getArticle():
         else:
             raise Exception("QUERY ERROR: Must provide Query articleId OR title")
         
-        # TODO : Change type and topic back into array after getting text from sqlite
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
         
@@ -89,8 +88,7 @@ def getArticle():
         return ('DATA ERROR: Data Not Found OR Data doesn\'t EXISTS', 404)
     
     except Exception as e:
-        # print("An Unecpected error occured while getting data from Database")
-        return (str(e), 405)
+        return (str(e), 401)
     
 # TODO : Update the Article summary route method to POST asd send query as POST-data
 
@@ -121,3 +119,23 @@ def getArticleSummary():
     except:
         print("An Unecpected error occured while getting data from Database")
         return '400'
+    
+@api.route('/database/empty',methods=['GET'])
+def check_IsEmpty():
+    try:
+        if request.method != 'GET':
+            raise Exception("METHOD ERROR: route only supports GET method")
+        
+        DatabaseConnection = sqlite3.connect(DATABASE_PATH)
+        cursor = DatabaseConnection.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM Articles")
+        ROWS = cursor.fetchone()
+
+        if int(ROWS[0]) != 0:
+            return ("False",201)
+        else:
+            return ("True",201)
+    
+    except Exception as e:
+        return(str(e),401)
