@@ -56,8 +56,6 @@ def Article_Insert() -> str:
 def getArticle():
     if request.method != "POST":
         raise Exception("METHOD ERROR: route only supports POST method")
-    
-    print(request.data)
 
     # Connect to database to get article data
     databaseConnection = sqlite3.connect(DATABASE_PATH)
@@ -73,16 +71,18 @@ def getArticle():
         elif DATA.get('title') != None:
             Article = cursor.execute(GET_ARTICLE_WITH_TITLE,{'title': str(DATA.get('title'))})
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
-        
-        # TODO : Change type and topic back into array after getting text from sqlite
             
         else:
             raise Exception("QUERY ERROR: Must provide Query articleId OR title")
         
+        # TODO : Change type and topic back into array after getting text from sqlite
+        TYPE = TYPE.split(',')
+        TOPICS = TOPICS.split(',')
+        
         cursor.close()
         databaseConnection.close()        
         
-        ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publishedDate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarizedStatus':bool(SUMMARIZEDSTATUS)})                
+        ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publisheddate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarized_status':bool(True) if SUMMARIZEDSTATUS=='1' else bool(False)})                
         return (ARTICLE, 201)
     
     except TypeError as e:
