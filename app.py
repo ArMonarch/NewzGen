@@ -52,6 +52,14 @@ class Newz_Server():
         DATA : Dict = json.loads(request.content)
         return DATA
     
+    def getArticleId(self,articleNo):
+        API = f'{self.NEWZ_SCRAPPER_SERVER}/api/bbc/get/article'
+        request = requests.get(url=API, params={'page':articleNo,'topic':'unknown'})
+        if request.status_code != 201:
+            raise Exception('REQUESTS ERROR: Failed to Fetch Data')
+        DATA : Dict = json.loads(request.content)
+        return DATA
+    
 def insert_Article(DATA : dict) -> None :
     API = f'http://127.0.0.1:9200/api/add/article'
     request = requests.post(url=API, json=DATA)
@@ -59,28 +67,45 @@ def insert_Article(DATA : dict) -> None :
         raise Exception('REQUESTS ERROR: Failed to Post Data')
     return
 
-def find_Article(title : str) -> dict :
+def find_Article(title : str) -> (dict | None) :
     API = f'http://127.0.0.1:9200/api/get/article'
     request = requests.post(url=API, json={'title':title})
-    print(request.content)
-    pass
+    
+    if request.status_code == 404:
+        return None
+    
+    elif request.status_code != 201:
+        raise Exception('REQUESTS ERROR: Failed to Get Article')
+    
+    return json.loads(request.content)
 
-# def find_Article(articleId : int) -> dict:
-#     API = f'http://127.0.0.1:9200/api/get/article'
-#     request = requests.post(url=API, json={'articleId':articleId})
-#     pass
+def database_isEmpty() -> bool:
+    API = f'http://127.0.0.1:9200/api/database/empty'
+    request = requests.get(API)
+    if request.status_code != 201:
+        raise Exception('REQUESTS ERROR: Failed to Check Database Status')
+    status = False if str(request.text) != 'True' else True
+    return status
 
+# LATEST_ARTICLE_TITLE : str = ''
 
 def main():
-    
-    # job1 : Get 1 article and check if the article is already in the database
-    # Article : dict = Newz_Server().getArticle()
+    try:
+        News = Newz_Server()
+        Article : dict
+        for i in range(0,100):            
+            Article = News.getArticleId(articleNo=i)
+            if not find_Article(Article.get('title')):
+                insert_Article(Article)
+            
+            else:
+                break
 
-    find_Article(title="'I was moderating hundreds of horrific and traumatising videos'")
+    except Exception as e:
+        print(str(e))
 
-    # insert_Article(Article)
-
-    # job2 : Get another 2 article and check if the article is already in the database
+    finally:
+        pass
 
     return
 
@@ -90,12 +115,25 @@ def WorkerMain(Queue: queue.Queue, StopEvent: threading.Event):
             Process = Queue.get()
             Process()
             Queue.task_done()
-        time.sleep(0.1)
+        time.sleep(0.5)
 
 if __name__ == "__main__":
 
+    try:
+        DATABASE_EMPTY : bool = database_isEmpty()
+        # if database is empty populate the database with 10 articles
+        if DATABASE_EMPTY:
+            Articles = Newz_Server().getArticles(size=100)
+            for Article in Articles:
+                insert_Article(Article)
+            print("Finished populating the database with articles")
+
+    except Exception as e:
+        print(str(e))
+
+
     main()
-    schedule.every(5).seconds.do(Queue.put,main)
+    schedule.every(10).seconds.do(Queue.put,main)
 
     Thread = threading.Thread(target=WorkerMain, args=(Queue, stopEvent))
     Thread.start()
@@ -103,7 +141,7 @@ if __name__ == "__main__":
     try:
         while True:
             schedule.run_pending()
-            time.sleep(0.1)
+            time.sleep(1)
     
     except KeyboardInterrupt:
         print("\nStopping the worker thread due to user interrupt...")
