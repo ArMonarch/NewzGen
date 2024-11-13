@@ -84,8 +84,8 @@ class BBC():
     def __init__(self) -> None:
         return
     
-    def getArticle(self):
-        self.API_QUERY.update({'size':1})
+    def getArticle(self,page=0):
+        self.API_QUERY.update({'page':page,'size':1})
         API = Url(url=self.BBC_Technology_News_API, query=self.API_QUERY)
         
         try:

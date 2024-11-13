@@ -21,13 +21,11 @@ def main() -> None:
         cursor.execute(CREATE_ARTICLE_TABLE)
         cursor.execute(CREATE_ARTICLE_SUMMARY_TABLE)
 
-        print(sqlite3.sqlite_version)
-
         cursor.close()
         connect.close()
     
-    except:
-        print("An error occured during Database Connection or Table Creation")
+    except sqlite3.Error as e:
+        print("An error occured during Database Connection or Table Creation", str(e))
     
     return
 

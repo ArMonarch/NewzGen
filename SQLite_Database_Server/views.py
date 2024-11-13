@@ -67,6 +67,7 @@ def getArticle():
         if DATA.get('articleId') != None:
             Article = cursor.execute(GET_ARTICLE_WITH_ID,{'articleId': int(DATA.get('articleId'))})
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
+            
 
         elif DATA.get('title') != None:
             Article = cursor.execute(GET_ARTICLE_WITH_TITLE,{'title': str(DATA.get('title'))})
@@ -79,7 +80,7 @@ def getArticle():
         TOPICS = TOPICS.split(',')
         
         cursor.close()
-        databaseConnection.close()        
+        databaseConnection.close()
         
         ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publisheddate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarized_status':bool(True) if SUMMARIZEDSTATUS=='1' else bool(False)})                
         return (ARTICLE, 201)

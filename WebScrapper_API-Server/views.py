@@ -15,8 +15,14 @@ def getArticle():
         if request.args.get('topic') == None:
             # raise Exception('QUERY ERROR: For this api Query args should be topic')
             raise Exception('QUERY ERROR: For this api Query args should be topic')
-    
-        Article : Dict = BBC().getArticle()
+        
+        Article: dict
+        
+        if request.args.get('page'):
+            Article = BBC().getArticle(page=int(request.args.get('page')))
+        else:
+            Article = BBC().getArticle()
+
         return (Article, 201)
     
     except Exception as e:
