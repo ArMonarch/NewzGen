@@ -19,7 +19,7 @@ CREATE_ARTICLE_TABLE = '''
         PublishedDate TEXT,
         Source TEXT,
         Url TEXT,
-        Summarized_Status BOOL
+        Summarized_Status TEXT
     );
 '''
 
@@ -57,4 +57,10 @@ GET_SUMMARY_WITH_ID = '''
     SELECT Id, Article_Id, LLM_Used, Generated_Summary
     from Articlez_Summaries
     WHERE Id = :summaryId;
+'''
+
+GET_ARTICLE_WITH_TITLE = '''
+    SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source , Url, Summarized_Status
+    FROM Articles
+    WHERE Title = :title;
 '''

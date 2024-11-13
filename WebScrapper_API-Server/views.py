@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response
 from NewsScrapper.BBC import BBC
 from typing import Dict, List
 
@@ -16,10 +16,11 @@ def getArticle():
             # raise Exception('QUERY ERROR: For this api Query args should be topic')
             raise Exception('QUERY ERROR: For this api Query args should be topic')
     
-        Article: Dict = BBC().getArticle()
-        return Article
+        Article : Dict = BBC().getArticle()
+        return (Article, 201)
+    
     except Exception as e:
-        return e
+        return (str(e), 401)
 
 @api.route('/bbc/get/articles',methods=['GET'])
 def getArticles():
@@ -32,12 +33,8 @@ def getArticles():
             # raise Exception('QUERY ERROR: For this api Query args should be topic')
             raise Exception('QUERY ERROR: For this api Query args should be topic')
         
-        if int(request.args.get('size')) > 1:
-            Articles: List[Dict] = BBC().getArticles(request.args.get('size'))
-            return Articles
-        elif request.args.get('size') == None:
-            Articles: List[Dict] = BBC().getArticles(2)
-            return Articles      
+        Articles: List[Dict] = BBC().getArticles(int(request.args.get('size')))
+        return (Articles, 201)
 
     except Exception as e:
-        return e
+        return (str(e), 401)

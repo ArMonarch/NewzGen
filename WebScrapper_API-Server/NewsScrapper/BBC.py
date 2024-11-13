@@ -33,7 +33,7 @@ class Article():
     topics: List[str]
     body: (str | None)
     publishedAt: str
-    summarizedStatus: (str | None)
+    summarized_status: bool
 
     def __init__(self,data):
         self.id = None
@@ -44,8 +44,8 @@ class Article():
         self.authors = None
         self.topics = data.get('topics')
         self.body = None
-        self.publishedAt = data.get('publishedAt')
-        self.summarizedStatus = False
+        self.publisheddate = data.get('publishedAt')
+        self.summarized_status = False
 
         self.scrape()
         return
@@ -65,7 +65,7 @@ class Article():
             return e
         
     def getData(self) -> Dict:
-        DATA = dict({"id":None, "type":self.type, "source":self.source, "url":self.url, "title":self.title, "authors":self.authors, "topics":self.topics, "body":self.body, "publishedAt":self.publishedAt, "summarizedStatus":self.summarizedStatus})
+        DATA = dict({"id":None, "type":self.type, "source":self.source, "url":self.url, "title":self.title, "authors":self.authors, "topics":self.topics, "body":self.body, "publisheddate":self.publisheddate, "summarized_status":self.summarized_status})
         return DATA
         
     def __str__(self):
@@ -115,8 +115,13 @@ class BBC():
             print('An error occured during fetching News Data',e)
             return str(e)       
 
-    def getArticles(self, size):
+    def getArticles(self, size = 1):
+        
+        if size == None:
+            size = 1
+
         self.API_QUERY.update({'size':size})
+        
         API = Url(url=self.BBC_Technology_News_API,query=self.API_QUERY)
 
         try:
@@ -145,4 +150,4 @@ class BBC():
 
             return ARTICLES
         except Exception as e:
-            return e
+            return (str(e), 401)
