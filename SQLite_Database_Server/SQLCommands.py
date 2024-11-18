@@ -39,7 +39,7 @@ CREATE_ARTICLE_SUMMARY_TABLE = '''
 
 INSERT_ARTICLE_WITH_ID = '''
     INSERT INTO Articles (id, Type, Authors, Title, Topics, Body, PublishedDate, Source, Summarized_Status)
-    VALUES ({id}, {type}, {authors}, {title}, {topics}, {body}, {publisheddate}, {source}, {summarized_status});
+    VALUES (:id, :type, :authors, :title, :topics, :body, :publisheddate, :source, :summarized_status);
 '''
 
 INSERT_ARTICLE_WITHOUT_ID = '''
@@ -50,17 +50,33 @@ INSERT_ARTICLE_WITHOUT_ID = '''
 GET_ARTICLE_WITH_ID = '''
     SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source, Url, Summarized_Status
     FROM Articles
-    WHERE Id = :articleId;
-'''
-
-GET_SUMMARY_WITH_ID = '''
-    SELECT Id, Article_Id, LLM_Used, Generated_Summary
-    from Articlez_Summaries
-    WHERE Id = :summaryId;
+    WHERE Id = :article_id;
 '''
 
 GET_ARTICLE_WITH_TITLE = '''
     SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source , Url, Summarized_Status
     FROM Articles
     WHERE Title = :title;
+'''
+
+INSERT_SUMMARY_WITH_ID = '''
+    INSERT INTO Articlez_Summaries (Id, Article_Id, LLM_Used, Generated_Summary)
+    VALUES (:id, :article_id, :llm_used, :generaed_summary);
+'''
+
+INSERT_SUMMARY_WITHOUT_ID = '''
+    INSERT INTO Articlez_Summaries (Article_Id, LLM_Used, Generated_Summary)
+    VALUES (:article_id, :llm_used, :generaed_summary);
+'''
+
+GET_SUMMARY_WITH_ID = '''
+    SELECT Id, Article_Id, LLM_Used, Generated_Summary
+    FROM Articlez_Summaries
+    WHERE Id = :summary_id;
+'''
+
+GET_SUMMARY_WITH_ARTICLEID = '''
+    SELECT Id, Article_Id, LLM_Used, Generated_Summary
+    FROM Articlez_Summaries
+    WHERE Article_Id = :article_id;
 '''

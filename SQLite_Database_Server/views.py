@@ -59,8 +59,8 @@ def getArticle():
     try:
         DATA : Dict = dict(json.loads(request.data))
 
-        if DATA.get('articleId') != None:
-            Article = cursor.execute(GET_ARTICLE_WITH_ID,{'articleId': int(DATA.get('articleId'))})
+        if DATA.get('article_id') != None:
+            Article = cursor.execute(GET_ARTICLE_WITH_ID,{'article_id': int(DATA.get('article_id'))})
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
             
 
@@ -69,7 +69,7 @@ def getArticle():
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
             
         else:
-            raise Exception("QUERY ERROR: Must provide Query articleId OR title")
+            raise Exception("QUERY ERROR: Must provide Query article_id OR title")
         
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
