@@ -10,11 +10,6 @@ from config import DATABASE_PATH
 # create blueprint for the views
 api = Blueprint('api', __name__)
 
-@api.route('hello', methods=['GET'])
-def hello():
-    return "Hello World!"
-
-
 # functional route to insert Article to database
 @api.route('/add/article', methods=['POST'])
 def Article_Insert() -> str:
@@ -64,8 +59,8 @@ def getArticle():
     try:
         DATA : Dict = dict(json.loads(request.data))
 
-        if DATA.get('articleId') != None:
-            Article = cursor.execute(GET_ARTICLE_WITH_ID,{'articleId': int(DATA.get('articleId'))})
+        if DATA.get('article_id') != None:
+            Article = cursor.execute(GET_ARTICLE_WITH_ID,{'article_id': int(DATA.get('article_id'))})
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
             
 
@@ -74,7 +69,7 @@ def getArticle():
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
             
         else:
-            raise Exception("QUERY ERROR: Must provide Query articleId OR title")
+            raise Exception("QUERY ERROR: Must provide Query article_id OR title")
         
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
@@ -91,6 +86,11 @@ def getArticle():
     except Exception as e:
         return (str(e), 401)
     
+    
+@api.route('/add/article-summary', methods=['POST'])
+def ArticleSummary_Insert():
+    return
+
 # TODO : Update the Article summary route method to POST asd send query as POST-data
 
 @api.route('/get/article-summary',methods=['GET'])

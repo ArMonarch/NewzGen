@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
 
     main()
-    schedule.every(10).seconds.do(Queue.put,main)
+    schedule.every(30).minutes.do(Queue.put,main)
 
     Thread = threading.Thread(target=WorkerMain, args=(Queue, stopEvent))
     Thread.start()
