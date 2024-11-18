@@ -10,11 +10,6 @@ from config import DATABASE_PATH
 # create blueprint for the views
 api = Blueprint('api', __name__)
 
-@api.route('hello', methods=['GET'])
-def hello():
-    return "Hello World!"
-
-
 # functional route to insert Article to database
 @api.route('/add/article', methods=['POST'])
 def Article_Insert() -> str:
@@ -91,6 +86,11 @@ def getArticle():
     except Exception as e:
         return (str(e), 401)
     
+    
+@api.route('/add/article-summary', methods=['POST'])
+def ArticleSummary_Insert():
+    return
+
 # TODO : Update the Article summary route method to POST asd send query as POST-data
 
 @api.route('/get/article-summary',methods=['GET'])
