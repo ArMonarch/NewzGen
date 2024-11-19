@@ -2,9 +2,7 @@ from flask import Blueprint, request
 from typing import Dict
 import json
 import sqlite3
-from sqlite3 import OperationalError
-# from extension import sqlite3
-from SQLCommands import INSERT_ARTICLE_WITHOUT_ID, GET_ARTICLE_WITH_ID, GET_SUMMARY_WITH_ID, GET_ARTICLE_WITH_TITLE
+from SQLCommands import INSERT_ARTICLE_WITH_ID, INSERT_ARTICLE_WITHOUT_ID, GET_ARTICLE_WITH_ID, GET_ARTICLE_WITH_TITLE, INSERT_SUMMARY_WITH_ID, INSERT_SUMMARY_WITHOUT_ID, GET_SUMMARY_WITH_ID, GET_SUMMARY_WITH_ARTICLEID
 from config import DATABASE_PATH
 
 # create blueprint for the views
@@ -13,51 +11,59 @@ api = Blueprint('api', __name__)
 # functional route to insert Article to database
 @api.route('/add/article', methods=['POST'])
 def Article_Insert() -> str:
-    if request.method == 'POST':
-        try:
-            ArticleData:Dict = dict(json.loads(request.data))
-            if ArticleData['type'] == "" and ArticleData['authors'] == "" and ArticleData['topics'] == "" and ArticleData['body'] == "" and ArticleData['publisheddate'] == ""  and ArticleData['source'] == "" and ArticleData['url'] == "" and ArticleData['summarized_status'] == "":            
-                print("Some of the Data Fields are missing!!")
-                return "400"
 
-            DatabaseConnection = sqlite3.connect(DATABASE_PATH)
-            cursor = DatabaseConnection.cursor()
-
-            try:
-                # change all list to text
-                ArticleData['type'] = ','.join(ArticleData.get('type'))
-                ArticleData['topics'] = ','.join(ArticleData.get('topics'))
-                cursor.execute(INSERT_ARTICLE_WITHOUT_ID, ArticleData)
-            
-            except OperationalError:
-                print("There is an error in SQL Query")
-
-            cursor.close()
-            DatabaseConnection.commit()
-            DatabaseConnection.close()
-            
-            return ('', 201)
+    try:
+        if request.method != 'POST':
+            raise Exception('METHOD ERROR: route only supports POST method')
         
-        except KeyError as e:
-            print("Important Data Field Missing!!")
-            return (str(e), 401)
+        DATA : dict = dict(json.loads(request.data))
+    
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
 
-        except ValueError as e:
-            print("Decoding JSON has failed")
-            return (str(e), 401)
+        # if DATA.get('type') and DATA.get('authors') and DATA.get('topics') and DATA.get('body') and DATA.get('publisheddate') and DATA.get('source') and DATA.get('url') and DATA.get('summarized_status'):
+        
+        if DATA.get('title') and DATA.get('body'):
+            TYPE : str = ','.join(DATA.get('type'))
+            TOPICS : str = ','.join(DATA.get('topics'))
+
+            DATA.update({'type': TYPE, 'topics': TOPICS})
+            
+            if DATA.get('id'):
+                cursor.execute(INSERT_ARTICLE_WITH_ID, DATA)
+            
+            elif not DATA.get('id'):
+                cursor.execute(INSERT_ARTICLE_WITHOUT_ID, DATA)
+            
+            return ('Pass',201)
+        
+        else:
+            raise Exception('VALUE ERROR: Required fields missing in (id (optional), type, authors, topics, body, publisheddate, source, url, summarized_status)')
+    
+    except sqlite3.Error as e:
+        return (f'SQL Error:{e.sqlite_errorname}, ErrorCode: {e.sqlite_errorcode}', 403)
+    
+    except Exception as e:
+        return (str(e),401)
+    
+    finally:
+        cursor.close()
+        connection.commit()
+        connection.close()
         
 # functional route to get a single id with Id & Title = -----------
 @api.route('/get/article',methods=['POST'])
 def getArticle():
-    if request.method != "POST":
-        raise Exception("METHOD ERROR: route only supports POST method")
-
-    # Connect to database to get article data
-    databaseConnection = sqlite3.connect(DATABASE_PATH)
-    cursor = databaseConnection.cursor()
 
     try:
+        if request.method != "POST":
+            raise Exception("METHOD ERROR: route only supports POST method")
+        
         DATA : Dict = dict(json.loads(request.data))
+
+        # Connect to database to get article data
+        databaseConnection = sqlite3.connect(DATABASE_PATH)
+        cursor = databaseConnection.cursor()
 
         if DATA.get('article_id') != None:
             Article = cursor.execute(GET_ARTICLE_WITH_ID,{'article_id': int(DATA.get('article_id'))})
@@ -74,11 +80,11 @@ def getArticle():
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
         
-        cursor.close()
-        databaseConnection.close()
-        
         ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publisheddate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarized_status':bool(True) if SUMMARIZEDSTATUS=='1' else bool(False)})                
         return (ARTICLE, 201)
+    
+    except sqlite3.Error as e:
+        return (f'SQL Error:{e.sqlite_errorname}, ErrorCode: {e.sqlite_errorcode}', 403)
     
     except TypeError as e:
         return ('DATA ERROR: Data Not Found OR Data doesn\'t EXISTS', 404)
@@ -86,40 +92,91 @@ def getArticle():
     except Exception as e:
         return (str(e), 401)
     
+    finally:
+        cursor.close()
+        databaseConnection.close()
+    
     
 @api.route('/add/article-summary', methods=['POST'])
 def ArticleSummary_Insert():
-    return
-
-# TODO : Update the Article summary route method to POST asd send query as POST-data
-
-@api.route('/get/article-summary',methods=['GET'])
-def getArticleSummary():
-    if request.method != 'GET':
-        raise Exception("METHOD ERROR: route only supports GET method")
-
-    if request.args.get('summaryId') == None:
-        raise Exception("QUERY ERROR: For this api Query args should be articleId=''")
     
-    SummaryArticleId = request.args.get('summaryId')
+    try:
+        if request.method != 'POST':
+            raise Exception('METHOD ERROR: route only supports POST method')
+        
+        DATA : dict = dict(json.loads(request.data))
 
-    # Connect to database to get article data
-    databaseConnection = sqlite3.connect(DATABASE_PATH)
-    cursor = databaseConnection.cursor()
+        # Connect to the database
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+        
+        if DATA.get('article_id') != None and DATA.get('llm_used') != None and DATA.get('generated_summary') != None:
+            
+            if DATA.get('id'):
+                cursor.execute(INSERT_SUMMARY_WITH_ID, DATA)
+
+            elif not DATA.get('id'):
+                cursor.execute(INSERT_SUMMARY_WITHOUT_ID, DATA)
+
+            return ('',201)
+
+        else:
+            raise Exception('VALUE ERROR: Required fields missing in (id (optional) ,article_id, llm_used, generated_summary)')
+        
+    except sqlite3.Error as e:
+        return (f'SQL Error:{e.sqlite_errorname}, ErrorCode: {e.sqlite_errorcode}', 403)
+
+    except Exception as e:
+        return (str(e), 401)
+    
+    finally:
+        cursor.close()
+        connection.commit()
+        connection.close()
+
+@api.route('/get/article-summary',methods=['POST'])
+def getArticleSummary():
 
     try:
-        Summary = cursor.execute(GET_SUMMARY_WITH_ID, {'summaryId':SummaryArticleId})
-        ID, ARTICLEID, LLMUSED, GENERATEDSUMMARY = Summary.fetchone()
-
-        cursor.close()
-        databaseConnection.close()
+        if request.method != 'POST':
+            raise Exception("METHOD ERROR: route only supports POST method")
         
-        SummaryData = dict({'id':ID,'articleId':ARTICLEID,'llmUsed':LLMUSED,'generatedSummary':GENERATEDSUMMARY})
-        return SummaryData
+        DATA : dict = dict(json.loads(request.data))
+
+        # Connect to database to get article data
+        databaseConnection = sqlite3.connect(DATABASE_PATH)
+        cursor = databaseConnection.cursor()
+
+        if DATA.get('summary_id'):
+            summary = cursor.execute(GET_SUMMARY_WITH_ID, DATA)
+            ID, ARTICLE_ID, LLM_USED, GENERATED_SUMMARY = summary.fetchone()
+
+        elif DATA.get('article_id'):
+            summary = cursor.execute(GET_SUMMARY_WITH_ARTICLEID, DATA)
+            ID, ARTICLE_ID, LLM_USED, GENERATED_SUMMARY = summary.fetchone()
+        
+        else:
+            raise Exception('QUERY ERROR: Required fields missing in (summary_id, article_id) *one required')
+        
+        SUMMARY : dict = dict({
+            'id': ID,
+            'article_id': ARTICLE_ID,
+            'llm_used': LLM_USED,
+            'generated_summary': GENERATED_SUMMARY
+        })
+
+        return (SUMMARY, 201)
     
-    except:
-        print("An Unecpected error occured while getting data from Database")
-        return '400'
+    except sqlite3.Error as e:
+        return (f'SQL Error:{e.sqlite_errorname}, ErrorCode: {e.sqlite_errorcode}', 403)
+    
+    except TypeError as e:
+        return ('DATA ERROR: Data Not Found OR Data doesn\'t EXISTS', 404)
+    
+    except Exception as e:
+        return (str(e), 401)
+    
+# Route to check if the database is empty
     
 @api.route('/database/empty',methods=['GET'])
 def check_IsEmpty():
@@ -127,8 +184,8 @@ def check_IsEmpty():
         if request.method != 'GET':
             raise Exception("METHOD ERROR: route only supports GET method")
         
-        DatabaseConnection = sqlite3.connect(DATABASE_PATH)
-        cursor = DatabaseConnection.cursor()
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
 
         cursor.execute("SELECT COUNT(*) FROM Articles")
         ROWS = cursor.fetchone()
@@ -140,3 +197,7 @@ def check_IsEmpty():
     
     except Exception as e:
         return(str(e),401)
+    
+    finally:
+        cursor.close()
+        connection.close()
