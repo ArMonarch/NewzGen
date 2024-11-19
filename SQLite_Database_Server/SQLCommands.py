@@ -26,19 +26,19 @@ CREATE_ARTICLE_TABLE = '''
 CREATE_ARTICLE_SUMMARY_TABLE = '''
     CREATE TABLE IF NOT EXISTS Articlez_Summaries (
     Id INTEGER PRIMARY KEY,
-    Article_Id TEXT NOT NULL,
+    Article_Id INTEGER NOT NULL,
     LLM_Used TEXT NOT NULL,
     Generated_Summary TEXT NOT NULL,
     
     FOREIGN KEY (Article_Id)
-        REFERENCES Article (Id)
-            ON DELETE CASCADE
+        REFERENCES Articles (Id)
+            ON DELETE NO ACTION
             ON UPDATE NO ACTION
     );
 '''
 
 INSERT_ARTICLE_WITH_ID = '''
-    INSERT INTO Articles (id, Type, Authors, Title, Topics, Body, PublishedDate, Source, Summarized_Status)
+    INSERT INTO Articles (Id, Type, Authors, Title, Topics, Body, PublishedDate, Source, Summarized_Status)
     VALUES (:id, :type, :authors, :title, :topics, :body, :publisheddate, :source, :summarized_status);
 '''
 
@@ -61,12 +61,12 @@ GET_ARTICLE_WITH_TITLE = '''
 
 INSERT_SUMMARY_WITH_ID = '''
     INSERT INTO Articlez_Summaries (Id, Article_Id, LLM_Used, Generated_Summary)
-    VALUES (:id, :article_id, :llm_used, :generaed_summary);
+    VALUES (:id, :article_id, :llm_used, :generated_summary);
 '''
 
 INSERT_SUMMARY_WITHOUT_ID = '''
     INSERT INTO Articlez_Summaries (Article_Id, LLM_Used, Generated_Summary)
-    VALUES (:article_id, :llm_used, :generaed_summary);
+    VALUES (:article_id, :llm_used, :generated_summary);
 '''
 
 GET_SUMMARY_WITH_ID = '''

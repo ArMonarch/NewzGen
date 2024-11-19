@@ -1,6 +1,6 @@
 import requests
 
-request = requests.post('http://127.0.0.1:9200/api/get/article',json={"articleId":"1"})
+request = requests.post('http://127.0.0.1:9200/api/get/article',json={"article_id":95})
 
 for key, value in dict(request.json()).items():
     print(f'{key}:{type(value)}')
