@@ -5,6 +5,10 @@ from typing import Dict, List
 # create blueprint for the views
 api = Blueprint(name='WebScrapper',import_name='api')
 
+class DataError(Exception):
+    def __init__(self, *args):
+        super().__init__(*args)
+
 @api.route('/bbc/get/article', methods=['GET'])
 def getArticle():
     try:
@@ -18,10 +22,13 @@ def getArticle():
         
         Article: dict
         
+        
         if request.args.get('page'):
-            Article = BBC().getArticle(page=int(request.args.get('page')))
+            Article = BBC().getArticle(page=int(request.args.get('page')), topic=str(request.args.get("topic")))
+            if Article == None:
+                raise ValueError("RETURNED NONE")
         else:
-            Article = BBC().getArticle()
+            Article = BBC().getArticle(topic=str(request.args.get("topic")))
 
         return (Article, 201)
     
