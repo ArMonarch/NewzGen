@@ -21,8 +21,6 @@ def Article_Insert() -> str:
         connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
 
-        # if DATA.get('type') and DATA.get('authors') and DATA.get('topics') and DATA.get('body') and DATA.get('publisheddate') and DATA.get('source') and DATA.get('url') and DATA.get('summarized_status'):
-        
         if DATA.get('title'):
             TYPE : str = ','.join(DATA.get('type'))
             TOPICS : str = ','.join(DATA.get('topics'))

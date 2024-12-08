@@ -165,7 +165,7 @@ class BBC():
                     "source":self.SOURCE,
                     "url":self.BASEURL + request.get('path'),
                     "title":request.get('title'),
-                    "topics":list(request.get('topics')),
+                    "topics":list(request.get('topics')) if list(request.get('topics')).__len__() != 0 else list([topic]),
                     "publishedAt":request.get('lastPublishedAt')
                 }
             )

@@ -4,6 +4,7 @@ import schedule
 import threading
 import os
 import subprocess
+from datetime import datetime
 import requests
 import json
 from typing import Dict, List
@@ -87,7 +88,7 @@ def database_isEmpty() -> bool:
     status = False if str(request.text) != 'True' else True
     return status
 
-TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "ai-news"]
+TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health"]
 
 def main():
     News = Newz_Server()
