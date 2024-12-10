@@ -4,6 +4,7 @@ import schedule
 import threading
 import os
 import subprocess
+from datetime import datetime
 import requests
 import json
 from typing import Dict, List
@@ -11,7 +12,7 @@ from typing import Dict, List
 # this code contains the main loop of the progeam that regulates all the sub server
 
 # Create a queue to hold jobs
-Queue = queue.Queue(maxsize=20)
+Queue = queue.Queue()
 
 # This event will be used to signal the worker thread to stop
 stopEvent = threading.Event()
@@ -87,7 +88,7 @@ def database_isEmpty() -> bool:
     status = False if str(request.text) != 'True' else True
     return status
 
-TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "ai-news"]
+TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "technology", "ai-news"]
 
 def main():
     News = Newz_Server()

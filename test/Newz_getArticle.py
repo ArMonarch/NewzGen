@@ -1,6 +1,6 @@
 import requests
 
-request = requests.get('http://127.0.0.1:9400/api/bbc/get/article',params={'topic':'us-canada', "page":6})
+request = requests.get('http://127.0.0.1:9400/api/bbc/get/article',params={'topic':'ai-news', "page":5})
 
 print(request.status_code)
 
