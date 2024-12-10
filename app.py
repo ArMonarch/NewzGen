@@ -88,7 +88,7 @@ def database_isEmpty() -> bool:
     status = False if str(request.text) != 'True' else True
     return status
 
-TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health"]
+TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "technology", "ai-news"]
 
 def main():
     News = Newz_Server()
