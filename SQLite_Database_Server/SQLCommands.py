@@ -80,3 +80,10 @@ GET_SUMMARY_WITH_ARTICLEID = '''
     FROM Articlez_Summaries
     WHERE Article_Id = :article_id;
 '''
+
+GET_ONE_UNSUMMARIZED_ARTICLE = '''
+    SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source , Url, Summarized_Status
+    FROM Articles
+    WHERE Summarized_Status = 0
+    LIMIT 1;
+'''

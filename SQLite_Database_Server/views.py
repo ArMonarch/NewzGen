@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from typing import Dict
 import json
 import sqlite3
-from SQLCommands import INSERT_ARTICLE_WITH_ID, INSERT_ARTICLE_WITHOUT_ID, GET_ARTICLE_WITH_ID, GET_ARTICLE_WITH_TITLE, INSERT_SUMMARY_WITH_ID, INSERT_SUMMARY_WITHOUT_ID, GET_SUMMARY_WITH_ID, GET_SUMMARY_WITH_ARTICLEID
+from SQLCommands import INSERT_ARTICLE_WITH_ID, INSERT_ARTICLE_WITHOUT_ID, GET_ARTICLE_WITH_ID, GET_ARTICLE_WITH_TITLE, INSERT_SUMMARY_WITH_ID, INSERT_SUMMARY_WITHOUT_ID, GET_SUMMARY_WITH_ID, GET_SUMMARY_WITH_ARTICLEID, GET_ONE_UNSUMMARIZED_ARTICLE
 from config import DATABASE_PATH
 
 # create blueprint for the views
@@ -79,7 +79,7 @@ def getArticle():
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
         
-        ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publisheddate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarized_status':bool(True) if SUMMARIZEDSTATUS=='1' else bool(False)})                
+        ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publisheddate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarized_status':SUMMARIZEDSTATUS})
         return (ARTICLE, 201)
     
     except sqlite3.Error as e:
@@ -170,10 +170,42 @@ def getArticleSummary():
         return (f'SQL Error:{e.sqlite_errorname}, ErrorCode: {e.sqlite_errorcode}', 403)
     
     except TypeError as e:
-        return ('DATA ERROR: Data Not Found OR Data doesn\'t EXISTS', 404)
+        return ('', 404)
     
     except Exception as e:
         return (str(e), 401)
+    
+@api.route("/get/unsummarized/article", methods=["GET"])
+def getOneUnsummarizedArticle():
+    try:
+        if request.method != "GET":
+            raise Exception("METHOD ERROR: route only supports GET method")
+        
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+
+        Article = cursor.execute(GET_ONE_UNSUMMARIZED_ARTICLE)
+        ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
+
+        TYPE = TYPE.split(',')
+        TOPICS = TOPICS.split(',')
+        
+        ARTICLE = dict({'id':ID,'type':TYPE,'authors':AUTHORS,'title':TITLE,'topics':TOPICS,'body':BODY,'publisheddate':PUBLISHEDDATE,'source':SOURCE,'url':URL,'summarized_status':SUMMARIZEDSTATUS})                
+        return (ARTICLE, 201)
+
+    except TypeError as e:
+        return ("DATA ERROR: Data Not Found OR Data doesn\'t EXISTS",404)
+    
+    except Exception as e:
+        print(str(e))
+        return (str(e), 401)
+        
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# Function to update the Article from Articles table Summarized_Status to Pending
     
 # Route to check if the database is empty
     

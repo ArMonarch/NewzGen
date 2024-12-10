@@ -45,7 +45,7 @@ class Article():
         self.topics = data.get('topics')
         self.body = None
         self.publisheddate = data.get('publishedAt')
-        self.summarized_status = False
+        self.summarized_status = "unsummarized"
 
         self.scrape()
         return

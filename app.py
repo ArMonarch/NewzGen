@@ -12,7 +12,7 @@ from typing import Dict, List
 # this code contains the main loop of the progeam that regulates all the sub server
 
 # Create a queue to hold jobs
-Queue = queue.Queue(maxsize=20)
+Queue = queue.Queue()
 
 # This event will be used to signal the worker thread to stop
 stopEvent = threading.Event()
