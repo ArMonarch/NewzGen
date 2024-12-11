@@ -7,14 +7,21 @@ import sys
 import requests
 import json
 
-# Database Route
-DATABASE_API = 'http://127.0.0.1:9200'
+# Database Routes
+class DATABASE():
+    DATABASE_BASE_API = 'http://127.0.0.1:9200'
+    ADD_ARTICLE_SUMMARY = f'{DATABASE_BASE_API}/api/add/article-summary'
+    UPDATE_ARTICLE_STATUS_UNSUMMARIZED = f'{DATABASE_BASE_API}/api/update/article/status/unsummarized'
+    UPDATE_ARTICLE_STATUS_PENDING = f'{DATABASE_BASE_API}/api/update/article/status/pending'
+    UPDATE_ARTICLE_STATUS_SUMMARIZED = f'{DATABASE_BASE_API}/api/update/article/status/summarized'
+    
 
 # Enum Class for Ollama APIs
 class OllamaAPIs(Enum):
     BASE_API = "http://127.0.0.1:11434"
     GET_LLM_MODELS = f'{BASE_API}/api/tags'
     GENERATE_SUMMARY = f'{BASE_API}/api/generate'
+
 
 # Needed LLM Models
 NEEDED_LLM_MODELS = ["llama3.1:latest", "llama3.2:latest", "mistral:latest", "gemma2:9b"]
@@ -33,23 +40,40 @@ StopEvent = threading.Event()
 
 def Article_Summarization_Worker( ArticleQueue: queue.Queue, StopEvent: threading.Event):
     while not StopEvent.is_set():
-        if not Queue.empty():
-            if Llm_Models.__len__() != 1:
-                print("REPORT: This feature us currently being Added.")
-            else:
-                Article : dict = ArticleQueue.get()
-                prompt = f''' 
-                Summarize this News Article as Stated Below:
-                Title: {Article.get('title')}
-                Type: {Article.get('type')}
-                Topics: {Article.get('topics')}
-                Body: {Article.get('body')}
-                '''
-                DATA = dict({"model":Llm_Models[0], "prompt":prompt, "format": "json", "stream": False})
-                Generated_Summary = requests.post(url=OllamaAPIs.GENERATE_SUMMARY.value, json=DATA)
-                if Generated_Summary.status_code != 200:
-                    raise Exception("GENERATION ERROR: Failed to Generate Article Summary")
-                Summary : dict = dict(json.loads(Generated_Summary.content))
+        if not ArticleQueue.empty():
+            try:
+                if Llm_Models.__len__() != 1:
+                    print("REPORT: This feature us currently being Added.")
+                else:
+                    Article : dict = ArticleQueue.get()
+                    Article_Id = int(Article.get('id'))
+                    prompt = f''' 
+                    Summarize this News Article as Stated Below:
+                    Title: {Article.get('title')}
+                    Body: {Article.get('body')}
+                    in about one paragraph
+                    '''
+
+                    DATA = dict({"model":Llm_Models[0], "prompt":prompt, "stream": False})
+                    Generated_Summary = requests.post(url=OllamaAPIs.GENERATE_SUMMARY.value, json=DATA)
+                    if Generated_Summary.status_code != 200:
+                        raise Exception("GENERATION ERROR: Failed to Generate Article Summary")
+                    Summary : dict = dict(json.loads(Generated_Summary.content)).get("response")
+                    print(f'\nFinished Summarizing {Article.get('title')}')
+
+                    AddTo_Database = requests.post(DATABASE.ADD_ARTICLE_SUMMARY, json={"article_id":Article_Id,"llm_used":Llm_Models[0], "generated_summary":str(Summary)})
+                    if AddTo_Database.status_code != 201:
+                        raise Exception("FATAL ERROR")
+                    print(f'Added Summary of Article Title:{Article.get('title')} to Database \n')
+
+                    Update_Status_Summarized = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_SUMMARIZED, json={"id": Article_Id})
+                    if Update_Status_Summarized.status_code != 201:
+                        raise Exception("UPDATE ERROR")
+                    
+                    ArticleQueue.task_done()
+            
+            except Exception as e:
+                print(str(e))
         
         time.sleep(1)
 
@@ -80,10 +104,11 @@ if __name__ == "__main__":
                     # Do you like to pull the specified Model. (y/n)
                     # if Y Use ollama api for pulling model
                 
-        threading.Thread(group=None, target=Article_Summarization_Worker, args=(ArticleQueue, StopEvent))
+        Thread = threading.Thread(target=Article_Summarization_Worker, args=(ArticleQueue, StopEvent))
+        Thread.start()
 
         while True:
-            requested = requests.get(f'{DATABASE_API}/api/get/unsummarized/article')
+            requested = requests.get(f'{DATABASE.DATABASE_BASE_API}/api/get/unsummarized/article')
 
             if requested.status_code != 201 and requested.status_code != 404:
                 # There was error fetching the unsummarized news.
@@ -100,8 +125,15 @@ if __name__ == "__main__":
             del DATA
             
             if ArticleQueue._qsize() <= 30:
+                
+                if "video" in Article.get('type'):
+                    Update_Status_Pending = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_PENDING, json={"id": Article.get('id')})
+                    continue
+
                 ArticleQueue.put(Article)
-                print(f'REPORT: Added Article ID:{Article.get('id')} Title:{Article.get('title')} to Article Queue for summarization')
+                Update_Status_Pending = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_PENDING, json={"id": Article.get('id')})
+                print(f'\nREPORT: Added Article ID:{Article.get('id')}:{Article.get('title')} to Article Queue for summarization')
+
             else:
                 time.sleep(1 * 30) # sleep for 30 seconds and check again
                 continue
@@ -119,4 +151,7 @@ if __name__ == "__main__":
         print(str(e))
 
     finally:
-        pass
+        Thread.join()
+        while not ArticleQueue.empty():
+            Reroll_Status_Unsummarized = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_UNSUMMARIZED, json={"id":dict(ArticleQueue.get()).get('id')})
+            print(f'Unsummarized One Article')

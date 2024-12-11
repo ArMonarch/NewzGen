@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from typing import Dict
 import json
 import sqlite3
-from SQLCommands import INSERT_ARTICLE_WITH_ID, INSERT_ARTICLE_WITHOUT_ID, GET_ARTICLE_WITH_ID, GET_ARTICLE_WITH_TITLE, INSERT_SUMMARY_WITH_ID, INSERT_SUMMARY_WITHOUT_ID, GET_SUMMARY_WITH_ID, GET_SUMMARY_WITH_ARTICLEID, GET_ONE_UNSUMMARIZED_ARTICLE
+from SQLCommands import INSERT_ARTICLE_WITH_ID, INSERT_ARTICLE_WITHOUT_ID, GET_ARTICLE_WITH_ID, GET_ARTICLE_WITH_TITLE, INSERT_SUMMARY_WITH_ID, INSERT_SUMMARY_WITHOUT_ID, GET_SUMMARY_WITH_ID, GET_SUMMARY_WITH_ARTICLEID, GET_ONE_UNSUMMARIZED_ARTICLE, UPDATE_ARTICLE_STATUS_UNSUMMARIZED, UPDATE_ARTICLE_STATUS_PENDING, UPDATE_ARTICLE_STATUS_SUMMARIZED
 from config import DATABASE_PATH
 
 # create blueprint for the views
@@ -32,6 +32,10 @@ def Article_Insert() -> str:
             
             elif not DATA.get('id'):
                 cursor.execute(INSERT_ARTICLE_WITHOUT_ID, DATA)
+
+            cursor.close()
+            connection.commit()
+            connection.close()
             
             return ('Pass',201)
         
@@ -44,12 +48,7 @@ def Article_Insert() -> str:
     except Exception as e:
         print(e)
         return (str(e),401)
-    
-    finally:
-        cursor.close()
-        connection.commit()
-        connection.close()
-        
+         
 # functional route to get a single id with Id & Title = -----------
 @api.route('/get/article',methods=['POST'])
 def getArticle():
@@ -76,6 +75,9 @@ def getArticle():
         else:
             raise Exception("QUERY ERROR: Must provide Query article_id OR title")
         
+        cursor.close()
+        databaseConnection.close()
+        
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
         
@@ -90,11 +92,6 @@ def getArticle():
     
     except Exception as e:
         return (str(e), 401)
-    
-    finally:
-        cursor.close()
-        databaseConnection.close()
-    
     
 @api.route('/add/article-summary', methods=['POST'])
 def ArticleSummary_Insert():
@@ -116,6 +113,10 @@ def ArticleSummary_Insert():
 
             elif not DATA.get('id'):
                 cursor.execute(INSERT_SUMMARY_WITHOUT_ID, DATA)
+            
+            cursor.close()
+            connection.commit()
+            connection.close()
 
             return ('',201)
 
@@ -126,12 +127,7 @@ def ArticleSummary_Insert():
         return (f'SQL Error:{e.sqlite_errorname}, ErrorCode: {e.sqlite_errorcode}', 403)
 
     except Exception as e:
-        return (str(e), 401)
-    
-    finally:
-        cursor.close()
-        connection.commit()
-        connection.close()
+        return (str(e), 401)   
 
 @api.route('/get/article-summary',methods=['POST'])
 def getArticleSummary():
@@ -164,6 +160,9 @@ def getArticleSummary():
             'generated_summary': GENERATED_SUMMARY
         })
 
+        cursor.close()
+        databaseConnection.close()
+
         return (SUMMARY, 201)
     
     except sqlite3.Error as e:
@@ -181,11 +180,15 @@ def getOneUnsummarizedArticle():
         if request.method != "GET":
             raise Exception("METHOD ERROR: route only supports GET method")
         
+        # Connect to the database
         connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
 
         Article = cursor.execute(GET_ONE_UNSUMMARIZED_ARTICLE)
         ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
+
+        cursor.close()
+        connection.close()
 
         TYPE = TYPE.split(',')
         TOPICS = TOPICS.split(',')
@@ -199,13 +202,98 @@ def getOneUnsummarizedArticle():
     except Exception as e:
         print(str(e))
         return (str(e), 401)
-        
 
-    finally:
+# Function to update the Article from Articles table Summarized_Status to unsummarized
+@api.route("/update/article/status/unsummarized", methods=["POST"])
+def Update_Status_Unsummarized():
+    try:
+        Article_Id = dict(json.loads(request.data)).get("id")
+
+        if request.method != "POST":
+            raise Exception("METHOD ERROR: route only supports GET method")
+    
+        if not Article_Id:
+            raise Exception("QUERY ERROR: Required id field missing")
+        
+        if type(Article_Id) != int:
+            raise Exception("QUERY ERROR: Required id field must be int")
+        
+        # Connect to the database
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+        
+        cursor.execute(UPDATE_ARTICLE_STATUS_UNSUMMARIZED, dict({"id":Article_Id}))
+        
         cursor.close()
+        connection.commit()
         connection.close()
 
+        return("",201)
+    
+    except Exception as e:
+        return (str(e), 401)
+
 # Function to update the Article from Articles table Summarized_Status to Pending
+@api.route("/update/article/status/pending", methods=["POST"])
+def Update_Status_Pending():
+    try:
+        Article_Id = dict(json.loads(request.data)).get("id")
+        
+        if request.method != "POST":
+            raise Exception("METHOD ERROR: route only supports GET method")
+    
+        if not Article_Id:
+            raise Exception("QUERY ERROR: Required id field missing")
+        
+        if type(Article_Id) != int:
+            raise Exception("QUERY ERROR: Required id field must be int")
+        
+        
+        # connect to database
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+
+        cursor.execute(UPDATE_ARTICLE_STATUS_PENDING, dict({"id":Article_Id}))
+        
+        cursor.close()
+        connection.commit()
+        connection.close()
+
+        return("",201)
+    
+    except Exception as e:
+        return (str(e), 401)
+
+# Function to update the Article from Articles table Summarized_Status to summarized
+@api.route("/update/article/status/summarized", methods=["POST"])
+def Update_Status_Summarized():
+    try:
+        Article_Id = dict(json.loads(request.data)).get("id")
+
+        if request.method != "POST":
+            raise Exception("METHOD ERROR: route only supports GET method")
+    
+        if not Article_Id:
+            raise Exception("QUERY ERROR: Required id field missing")
+        
+        if type(Article_Id) != int:
+            raise Exception("QUERY ERROR: Required id field must be int")
+        
+        connection = sqlite3.connect(DATABASE_PATH)
+        cursor = connection.cursor()
+        
+        cursor.execute(UPDATE_ARTICLE_STATUS_SUMMARIZED, dict({"id":Article_Id}))
+
+        # commit and close the database connection
+        cursor.close()
+        connection.commit()
+        connection.close()
+
+        return("",201)
+    
+    except Exception as e:
+        return (str(e), 401)
+
     
 # Route to check if the database is empty
     
@@ -221,6 +309,9 @@ def check_IsEmpty():
         cursor.execute("SELECT COUNT(*) FROM Articles")
         ROWS = cursor.fetchone()
 
+        cursor.close()
+        connection.close()
+
         if int(ROWS[0]) != 0:
             return ("False",201)
         else:
@@ -228,7 +319,3 @@ def check_IsEmpty():
     
     except Exception as e:
         return(str(e),401)
-    
-    finally:
-        cursor.close()
-        connection.close()

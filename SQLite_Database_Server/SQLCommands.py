@@ -84,6 +84,23 @@ GET_SUMMARY_WITH_ARTICLEID = '''
 GET_ONE_UNSUMMARIZED_ARTICLE = '''
     SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source , Url, Summarized_Status
     FROM Articles
-    WHERE Summarized_Status = 0
+    WHERE Summarized_Status = 'unsummarized'
     LIMIT 1;
+'''
+UPDATE_ARTICLE_STATUS_UNSUMMARIZED = '''
+    UPDATE Articles
+    SET Summarized_Status = 'unsummarized'
+    WHERE Id = :id;
+'''
+
+UPDATE_ARTICLE_STATUS_PENDING = '''
+    UPDATE Articles
+    SET Summarized_Status = 'pending'
+    WHERE Id = :id;
+'''
+
+UPDATE_ARTICLE_STATUS_SUMMARIZED = '''
+    UPDATE Articles
+    SET Summarized_Status = 'summarized'
+    WHERE Id = :id;
 '''
