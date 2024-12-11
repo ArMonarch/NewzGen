@@ -84,7 +84,7 @@ GET_SUMMARY_WITH_ARTICLEID = '''
 GET_ONE_UNSUMMARIZED_ARTICLE = '''
     SELECT Id, Type, Authors, Title, Topics, Body, PublishedDate, Source , Url, Summarized_Status
     FROM Articles
-    WHERE Summarized_Status = 'umsummarized'
+    WHERE Summarized_Status = 'unsummarized'
     LIMIT 1;
 '''
 UPDATE_ARTICLE_STATUS_UNSUMMARIZED = '''

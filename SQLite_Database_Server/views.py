@@ -237,7 +237,6 @@ def Update_Status_Unsummarized():
 @api.route("/update/article/status/pending", methods=["POST"])
 def Update_Status_Pending():
     try:
-
         Article_Id = dict(json.loads(request.data)).get("id")
         
         if request.method != "POST":
@@ -253,8 +252,9 @@ def Update_Status_Pending():
         # connect to database
         connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
-        
+
         cursor.execute(UPDATE_ARTICLE_STATUS_PENDING, dict({"id":Article_Id}))
+        
         cursor.close()
         connection.commit()
         connection.close()
