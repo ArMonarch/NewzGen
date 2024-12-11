@@ -59,7 +59,7 @@ def Article_Summarization_Worker( ArticleQueue: queue.Queue, StopEvent: threadin
                     if Generated_Summary.status_code != 200:
                         raise Exception("GENERATION ERROR: Failed to Generate Article Summary")
                     Summary : dict = dict(json.loads(Generated_Summary.content)).get("response")
-                    print(f'Finished Summarizing {Article.get('title')}')
+                    print(f'\nFinished Summarizing {Article.get('title')}')
 
                     AddTo_Database = requests.post(DATABASE.ADD_ARTICLE_SUMMARY, json={"article_id":Article_Id,"llm_used":Llm_Models[0], "generated_summary":str(Summary)})
                     if AddTo_Database.status_code != 201:
