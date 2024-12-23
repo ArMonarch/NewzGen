@@ -1,6 +1,5 @@
 import datetime
 import json
-from os import wait
 import queue
 import threading
 import time
@@ -96,8 +95,8 @@ def __init_ollama__() -> bool:
     return False
 
 class Article:
-    def __init__(self, articel_id:int, article_title:str, article_type:str, article_topics:str, article_body:str) -> None:
-        self.articel_id: int = articel_id
+    def __init__(self, article_id:int, article_title:str, article_type:str, article_topics:str, article_body:str) -> None:
+        self.article_id: int = article_id
         self.article_title: str = article_title
         self.article_type:str = article_type
         self.article_topics:str = article_topics
@@ -105,7 +104,7 @@ class Article:
 
     # check if class  was init as null
     def null_init(self) -> bool:
-        if self.articel_id != -1:
+        if self.article_id != -1:
             return False
         # if null init return False
         return True
@@ -140,11 +139,6 @@ def get_unsummarized_article() -> Article:
         #parse response as json
         response_json = json.loads(response.content)
 
-        # check if the article is an video article 
-        # if yes return Article.null()
-        if "video" in list(response_json["type"]):
-            return Article.null()
-
         article: dict = {
             "article_id": response_json['id'] if response_json['id'] != None else -1,
             "article_title": response_json['title'] if response_json['title'] != None else "",
@@ -152,6 +146,13 @@ def get_unsummarized_article() -> Article:
             "article_topics": ",".join(response_json['topics']) if response_json['topics'] != None else "",
             "article_body": response_json['body'] if response_json['body'] != None else ""
         }
+        # check if the article is an video article 
+        # if yes return Article.null()
+        if "video" in list(response_json["type"]):
+            while not update_article_status_pending(Article.new(article)):
+                time.sleep(0.5)
+            return Article.null()
+
         return Article.new(article)
 
     except Exception as err:
@@ -160,40 +161,94 @@ def get_unsummarized_article() -> Article:
 
 def update_article_status_unsummarized(article: Article) -> bool:
     try:
-        update_status = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_UNSUMMARIZED, json={"id": article.articel_id})
+        update_status = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_UNSUMMARIZED, json={"id": article.article_id})
         if update_status.status_code != 201:
-            raise Exception("REQUEST ERROR: Err while updating Article status, Article_Id:%d" % article.articel_id)
-        return True
-    except:
-        return False
-
-def update_article_status_pending(article: Article) -> bool:
-    try:
-        update_status = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_PENDING, json={"id": article.articel_id})
-        if update_status.status_code != 201:
-            raise Exception("REQUEST ERROR: Err while updating Article status, Article_Id:%d" % article.articel_id)
-        return True
-    except:
-        return False
-
-def update_article_status_summarized(article: Article) -> bool:
-    try:
-        update_status = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_SUMMARIZED, json={"id": article.articel_id})
-        if update_status.status_code != 201:
-            raise Exception("REQUEST ERROR: Err while updating Article status, Article_Id:%d" % article.articel_id)
+            raise Exception("REQUEST ERROR: Err while updating Article status, Article_Id:%d" % article.article_id)
         return True
     except Exception as err:
         print(str(err))
         return False
+
+def update_article_status_pending(article: Article) -> bool:
+    try:
+        update_status = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_PENDING, json={"id": article.article_id})
+        if update_status.status_code != 201:
+            raise Exception("REQUEST ERROR: Err while updating Article status, Article_Id:%d" % article.article_id)
+        return True
+    except Exception as err:
+        print(str(err))
+        return False
+
+def update_article_status_summarized(article: Article) -> bool:
+    try:
+        update_status = requests.post(DATABASE.UPDATE_ARTICLE_STATUS_SUMMARIZED, json={"id": article.article_id})
+        if update_status.status_code != 201:
+            raise Exception("REQUEST ERROR: Err while updating Article status, Article_Id:%d" % article.article_id)
+        return True
+    except Exception as err:
+        print(str(err))
+        return False
+
+# functionality to generate article summary using the created summarizer model
+def gen_summary(article: Article) -> (str | None):
+    article_as_prompt = """Article: %s\nArticle Topics: %s\nArticle Body: %s""" % (article.article_title, article.article_topics, article.article_body)
+    try:
+        # variable that stores generated summary
+        genrated_summary: str = ""
+        # handle generated summary stream
+        payload = {"model": SUMMARY_MODEL, "prompt": article_as_prompt}
+        with requests.post(OllamaAPIs.GENERATE_SUMMARY, json=payload, stream=True) as gen_summary:
+            # check for HTTP error and raise Exception
+            gen_summary.raise_for_status()
+
+            # read response line by line
+            for gen_line in gen_summary.iter_lines():
+                # skip if gen_line is empty
+                if gen_line:
+                    #  if first line of the response contains summary sub string delete the entire line
+                    # will be implemented in twitter bot
+
+                    json_object: dict = dict(json.loads(gen_line))
+                    if not json_object["done"]:
+                        genrated_summary += json_object["response"]
+                    else:
+                        genrated_summary += json_object["response"]
+                        print("Finished Generating summary for Article ID: %s" % article.article_id)
+                        break
+
+        return genrated_summary
+    except:
+        return None
 
 # TODO: Complete this Worker Function
 def article_summary_worker(article_queue: queue.Queue, stop_event: threading.Event):
     while not stop_event.is_set():
         if not article_queue.empty():
             try:
-                pass
-            except:
-                pass
+                article: Article = article_queue.get()
+                print("Generating summary for Article Id: %s" % article.article_id)
+                generated_summary = gen_summary(article)
+                print("Generated summary for Article Id: %s" % article.article_id)
+                if generated_summary != None:
+                    # successfully generated summary now push the summary to Database and update article status to summarized
+                    payload = {"article_id": article.article_id, "llm_used": SUMMARY_MODEL, "generated_summary": generated_summary}
+                    response = requests.post(DATABASE.ADD_ARTICLE_SUMMARY, json=payload)
+                    if response.status_code != 201:
+                        raise Exception("Request Err: failed to add Article Id: %s summary to database" % article.article_id)
+                    print("Added Summarized Article of Id: %s to database" % article.article_id )
+                    # update article status unsummarized
+                    while not update_article_status_summarized(article):
+                        time.sleep(0.5) # wait 0.5 sec before every RETRY
+
+                    # task done signal
+                    article_queue.task_done()
+                    continue
+
+                else:
+                    raise Exception("Generation Err: failed to generate article summary")
+
+            except Exception as err:
+                print(str(err))
         # if queue is empty wait for 1 seconds
         time.sleep(1)
 
@@ -216,14 +271,15 @@ if __name__ == "__main__":
             # start queueing articles for summarization
             while True:
                 # if queue size > 30 wait 5sec and continue
-                if not article_queue._qsize() < int(30):
+                if not article_queue._qsize() < 5:
                     print("QUEUE: Queue full trying after 5sec")
                     time.sleep(1.0 * 5)
                     continue
 
                 unsummarized_article: Article = get_unsummarized_article()
+                print("Got One unsummarized Article with Id: %s" % unsummarized_article.article_id)
                 if unsummarized_article.null_init():
-                    time.sleep(1.0 * 30) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
+                    time.sleep(1.0 * 1) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
                     continue
 
                 # Not needed due to error handeling in update_article_status_pending function
@@ -232,6 +288,7 @@ if __name__ == "__main__":
                 while not update_article_status_pending(unsummarized_article):
                     time.sleep(1.0) # may be due to ... so wait 0.5 sec
 
+                print("Adding a Article with Id: %s to Queue" % unsummarized_article.article_id)
                 article_queue.put(unsummarized_article)
 
                 time.sleep(1.0)
@@ -251,6 +308,6 @@ if __name__ == "__main__":
         while not article_queue.empty():
             article: Article = article_queue.get()
             if not update_article_status_unsummarized(article):
-                print("Update Error: failed to update Article with ID: %d status to unsummarized" % article.articel_id)
+                print("Update Error: failed to update Article with ID: %d status to unsummarized (will RETRY LATER)" % article.article_id)
                 article_queue.put(article)
-            print("Updated Article of ID: %d status to unsummarized" % article.articel_id)
+            print("Updated Article of ID: %d status to unsummarized" % article.article_id)
