@@ -220,7 +220,22 @@ def gen_summary(article: Article) -> (str | None):
     except:
         return None
 
-# TODO: Complete this Worker Function
+# functionality to post generated summary to twitter with the stored summary in database asn id as summary_id
+def post_summary(summary_id: int) -> tuple:
+    post_api = "http://127.0.0.1:9300/api/post/summary"
+    try:
+        response = requests.get(post_api, params={"summary_id": summary_id})
+        # As this is an free account the rate limit is only 500 post per month and this limit will be reached with in _2 _3 days so skip posting for summary when limit is reached aka status code is 429
+        if response.status_code == 429:
+            return (True, "Twitter Err: Posting Limit Reached")
+
+        if response.status_code != 201:
+            raise Exception("Request Err: Failed to post the article summary")
+        return (True, "")
+    except Exception as err:
+        return (False, str(err))
+
+
 def article_summary_worker(article_queue: queue.Queue, stop_event: threading.Event):
     while not stop_event.is_set():
         if not article_queue.empty():
@@ -236,6 +251,21 @@ def article_summary_worker(article_queue: queue.Queue, stop_event: threading.Eve
                     if response.status_code != 201:
                         raise Exception("Request Err: failed to add Article Id: %s summary to database" % article.article_id)
                     print("Added Summarized Article of Id: %s to database" % article.article_id )
+
+                    # the summary id in database, needed for posting the summary through twitter bot
+                    summary_id = int(response.content)
+
+                    while True:
+                        result, Err = post_summary(summary_id)
+                        if result and Err == "":
+                            print("\nSuccessfully Posted through Twitter\nSummary Id: %s, Tile: %s", summary_id, article.article_title)
+                            break
+                        elif result and Err != "":
+                            print(Err)
+                            break
+                        else:
+                            print("Unsuccessful While Posting through Twitter\nErr: %s" % Err)
+
                     # update article status unsummarized
                     while not update_article_status_summarized(article):
                         time.sleep(0.5) # wait 0.5 sec before every RETRY
@@ -272,8 +302,8 @@ if __name__ == "__main__":
             while True:
                 # if queue size > 30 wait 5sec and continue
                 if not article_queue._qsize() < 5:
-                    print("QUEUE: Queue full trying after 5sec")
-                    time.sleep(1.0 * 5)
+                    print("QUEUE: Queue full trying after 20sec")
+                    time.sleep(1.0 * 20)
                     continue
 
                 unsummarized_article: Article = get_unsummarized_article()

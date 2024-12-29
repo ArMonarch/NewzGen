@@ -108,17 +108,20 @@ def ArticleSummary_Insert():
         
         if DATA.get('article_id') != None and DATA.get('llm_used') != None and DATA.get('generated_summary') != None:
             
+            last_rowid: int = -1
             if DATA.get('id'):
                 cursor.execute(INSERT_SUMMARY_WITH_ID, DATA)
+                last_rowid = cursor.lastrowid if cursor.lastrowid != None else -1
 
             elif not DATA.get('id'):
                 cursor.execute(INSERT_SUMMARY_WITHOUT_ID, DATA)
-            
+                last_rowid = cursor.lastrowid if cursor.lastrowid != None else -1
+
             cursor.close()
             connection.commit()
             connection.close()
 
-            return ('',201)
+            return (str(last_rowid),201)
 
         else:
             raise Exception('VALUE ERROR: Required fields missing in (id (optional) ,article_id, llm_used, generated_summary)')
