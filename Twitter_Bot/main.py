@@ -10,9 +10,9 @@ from flask import Flask, request
 redis_database = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 # for Newz_gen account
-API_Key = "EPQqixkHwGCwGsG44bXVf4vWf"
-API_Key_Secret = "ZogyAthJTE1RQ2HllzNh4FcuyML4kLvvlv9SDa5dXr1M9k6WZl"
-Access_Token = "1873235338879188992-fxYZjXh3HHeOURecIn7KLFaaTuTLQ1"
+API_Key = os.environ.get("API_KEY")
+API_Key_Secret = os.environ.get("API_KEY_SECRET")
+Access_Token = os.environ.get("ACCESS_TOKEN")
 Access_Token_Secret = os.environ.get("ACCESS_TOKEN_SECRET")
 
 # init flask app

@@ -138,7 +138,7 @@ def getArticleSummary():
     try:
         if request.method != 'POST':
             raise Exception("METHOD ERROR: route only supports POST method")
-        
+
         DATA : dict = dict(json.loads(request.data))
 
         # Connect to database to get article data
@@ -152,10 +152,10 @@ def getArticleSummary():
         elif DATA.get('article_id'):
             summary = cursor.execute(GET_SUMMARY_WITH_ARTICLEID, DATA)
             ID, ARTICLE_ID, LLM_USED, GENERATED_SUMMARY = summary.fetchone()
-        
+
         else:
             raise Exception('QUERY ERROR: Required fields missing in (summary_id, article_id) *one required')
-        
+
         SUMMARY : dict = dict({
             'id': ID,
             'article_id': ARTICLE_ID,
