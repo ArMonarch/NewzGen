@@ -63,7 +63,7 @@ def create_model( model_name: str) -> bool:
     # created LLM model name & modelfile
     # edit this to tune model summarization capability
     model = SUMMARY_MODEL
-    modelfile = 'FROM %s\nSYSTEM You are a professional news summarizer. Your task is to distill long and complex news articles into concise, engaging, and accurate summaries while preserving the main points and key details. Ensure the tone matches the content type (formal for hard news, casual for lighter stories) and include any critical context needed for a clear understanding.' % model_name
+    modelfile = 'FROM %s\nSYSTEM You are a professional news summarizer. Your task is to distill long and complex news articles into concise, engaging, and accurate summaries while preserving the main points and key details. Ensure the tone matches the content type (formal for hard news, casual for lighter stories) and include any critical context needed for a clear understanding. The summary should be in about 30 words strictly' % model_name
 
     try:
         payload: dict = {"model": f'{model}', "modelfile": modelfile}
@@ -134,6 +134,8 @@ def get_unsummarized_article() -> Article:
             raise Exception("REQUEST ERROR: Failed to fetch unsummarized article")
         # for 404 (aka No unnsummarized article left)
         if response.status_code == 404:
+            print("All Article finished Summarizing. Wait 30 Sec")
+            time.sleep(1 * 30)
             return Article.null()
 
         #parse response as json
@@ -231,6 +233,7 @@ def post_summary(summary_id: int) -> tuple:
 
         if response.status_code != 201:
             raise Exception("Request Err: Failed to post the article summary")
+
         return (True, "")
     except Exception as err:
         return (False, str(err))
@@ -265,6 +268,7 @@ def article_summary_worker(article_queue: queue.Queue, stop_event: threading.Eve
                             break
                         else:
                             print("Unsuccessful While Posting through Twitter\nErr: %s" % Err)
+                            break
 
                     # update article status unsummarized
                     while not update_article_status_summarized(article):
@@ -309,7 +313,7 @@ if __name__ == "__main__":
                 unsummarized_article: Article = get_unsummarized_article()
                 print("Got One unsummarized Article with Id: %s" % unsummarized_article.article_id)
                 if unsummarized_article.null_init():
-                    time.sleep(1.0 * 1) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
+                    time.sleep(1.0 * 2) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
                     continue
 
                 # Not needed due to error handeling in update_article_status_pending function

@@ -2,9 +2,9 @@ import time
 import queue
 import schedule
 import threading
-import os
-import subprocess
-from datetime import datetime
+# import os
+# import subprocess
+# from datetime import datetime
 import requests
 import json
 from typing import Dict, List
@@ -16,6 +16,9 @@ Queue = queue.Queue()
 
 # This event will be used to signal the worker thread to stop
 stopEvent = threading.Event()
+
+# TODO: Start all the modules from this file
+# runnung this file automatically starts Database, News_Scrapper, LLM_Ollama, Twitter_Bot as Thread
 
 # # Get current working directory
 # CURRENT_DIRECTORY = os.getcwd()
@@ -44,21 +47,21 @@ class Newz_Server():
             raise Exception('REQUESTS ERROR: Failed to Fetch Data')
         DATA : Dict = json.loads(request.content)
         return DATA
-        
+
     def getArticles(self, topic, size : int = 1) -> List[Dict]:
         API = f'{self.NEWZ_SCRAPPER_SERVER}/api/bbc/get/articles'
         request = requests.get(url=API, params={'topic':topic, 'size':size})
         if request.status_code != 201:
             raise Exception('REQUESTS ERROR: Failed to Fetch Data')
-        DATA : Dict = json.loads(request.content)
+        DATA = json.loads(request.content)
         return DATA
     
-    def getArticleId(self,articleNo, topic):
+    def getArticleId(self,articleNo, topic) -> dict:
         API = f'{self.NEWZ_SCRAPPER_SERVER}/api/bbc/get/article'
         request = requests.get(url=API, params={'page':articleNo,'topic':topic})
         if request.status_code != 201:
             raise Exception('REQUESTS ERROR: Failed to Fetch Data')
-        DATA : Dict = json.loads(request.content)
+        DATA : dict = json.loads(request.content)
         return DATA
     
 def insert_Article(DATA : dict) -> None :
@@ -71,13 +74,12 @@ def insert_Article(DATA : dict) -> None :
 def find_Article(title : str) -> (dict | None) :
     API = f'http://127.0.0.1:9200/api/get/article'
     request = requests.post(url=API, json={'title':title})
-    
+
     if request.status_code == 404:
         return None
-    
     elif request.status_code != 201:
         raise Exception('REQUESTS ERROR: Failed to Get Article')
-    
+
     return json.loads(request.content)
 
 def database_isEmpty() -> bool:
@@ -88,7 +90,9 @@ def database_isEmpty() -> bool:
     status = False if str(request.text) != 'True' else True
     return status
 
-TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "technology", "ai-news"]
+# TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "technology", "ai-news"]
+# Reduce the topics for scraping
+TOPICS : list[str] = ["us-canada", "uk", "asia", "australia", "europe", "science-health", "technology"]
 
 def main():
     News = Newz_Server()
@@ -98,12 +102,13 @@ def main():
         for i in range(0,99):
             try:
                 Article = News.getArticleId(articleNo=i, topic=topic)
-                print(f'')
+                article_title: str = str(Article.get("title"))
+
                 print(f'Got {topic} News, Article : {Article.get('title')}, Number ID {i+1}')
-                if not find_Article(Article.get('title')):
+                if not find_Article(article_title):
                     insert_Article(Article)
                     print(f'Inserted {topic} News, Number ID {i+1}')
-                
+
                 else:
                     break
 
@@ -124,10 +129,9 @@ if __name__ == "__main__":
 
     try:
         DATABASE_EMPTY : bool = database_isEmpty()
-        DATABASE_EMPTY = False
         # if database is empty populate the database with 10 articles
         if DATABASE_EMPTY:
-            Articles = Newz_Server().getArticles(size=100)
+            Articles = Newz_Server().getArticles(topic="technology",size=100)
             for Article in Articles:
                 insert_Article(Article)
             print("Finished populating the database with articles")
@@ -135,8 +139,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(str(e))
 
-
-    main()
+    Queue.put(main)
     schedule.every(30).minutes.do(Queue.put,main)
 
     Thread = threading.Thread(target=WorkerMain, args=(Queue, stopEvent))
@@ -146,7 +149,7 @@ if __name__ == "__main__":
         while True:
             schedule.run_pending()
             time.sleep(1)
-    
+
     except KeyboardInterrupt:
         print("\nStopping the worker thread due to user interrupt...")
         stopEvent.set()
