@@ -108,17 +108,20 @@ def ArticleSummary_Insert():
         
         if DATA.get('article_id') != None and DATA.get('llm_used') != None and DATA.get('generated_summary') != None:
             
+            last_rowid: int = -1
             if DATA.get('id'):
                 cursor.execute(INSERT_SUMMARY_WITH_ID, DATA)
+                last_rowid = cursor.lastrowid if cursor.lastrowid != None else -1
 
             elif not DATA.get('id'):
                 cursor.execute(INSERT_SUMMARY_WITHOUT_ID, DATA)
-            
+                last_rowid = cursor.lastrowid if cursor.lastrowid != None else -1
+
             cursor.close()
             connection.commit()
             connection.close()
 
-            return ('',201)
+            return (str(last_rowid),201)
 
         else:
             raise Exception('VALUE ERROR: Required fields missing in (id (optional) ,article_id, llm_used, generated_summary)')
@@ -135,7 +138,7 @@ def getArticleSummary():
     try:
         if request.method != 'POST':
             raise Exception("METHOD ERROR: route only supports POST method")
-        
+
         DATA : dict = dict(json.loads(request.data))
 
         # Connect to database to get article data
@@ -149,10 +152,10 @@ def getArticleSummary():
         elif DATA.get('article_id'):
             summary = cursor.execute(GET_SUMMARY_WITH_ARTICLEID, DATA)
             ID, ARTICLE_ID, LLM_USED, GENERATED_SUMMARY = summary.fetchone()
-        
+
         else:
             raise Exception('QUERY ERROR: Required fields missing in (summary_id, article_id) *one required')
-        
+
         SUMMARY : dict = dict({
             'id': ID,
             'article_id': ARTICLE_ID,

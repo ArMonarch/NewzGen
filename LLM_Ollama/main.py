@@ -63,7 +63,7 @@ def create_model( model_name: str) -> bool:
     # created LLM model name & modelfile
     # edit this to tune model summarization capability
     model = SUMMARY_MODEL
-    modelfile = 'FROM %s\nSYSTEM You are a professional news summarizer. Your task is to distill long and complex news articles into concise, engaging, and accurate summaries while preserving the main points and key details. Ensure the tone matches the content type (formal for hard news, casual for lighter stories) and include any critical context needed for a clear understanding.' % model_name
+    modelfile = 'FROM %s\nSYSTEM You are a professional news summarizer. Your task is to distill long and complex news articles into concise, engaging, and accurate summaries while preserving the main points and key details. Ensure the tone matches the content type (formal for hard news, casual for lighter stories) and include any critical context needed for a clear understanding. The summary should be in about 30 words strictly' % model_name
 
     try:
         payload: dict = {"model": f'{model}', "modelfile": modelfile}
@@ -134,6 +134,8 @@ def get_unsummarized_article() -> Article:
             raise Exception("REQUEST ERROR: Failed to fetch unsummarized article")
         # for 404 (aka No unnsummarized article left)
         if response.status_code == 404:
+            print("All Article finished Summarizing. Wait 30 Sec")
+            time.sleep(1 * 30)
             return Article.null()
 
         #parse response as json
@@ -220,7 +222,23 @@ def gen_summary(article: Article) -> (str | None):
     except:
         return None
 
-# TODO: Complete this Worker Function
+# functionality to post generated summary to twitter with the stored summary in database asn id as summary_id
+def post_summary(summary_id: int) -> tuple:
+    post_api = "http://127.0.0.1:9300/api/post/summary"
+    try:
+        response = requests.get(post_api, params={"summary_id": summary_id})
+        # As this is an free account the rate limit is only 500 post per month and this limit will be reached with in _2 _3 days so skip posting for summary when limit is reached aka status code is 429
+        if response.status_code == 429:
+            return (True, "Twitter Err: Posting Limit Reached")
+
+        if response.status_code != 201:
+            raise Exception("Request Err: Failed to post the article summary")
+
+        return (True, "")
+    except Exception as err:
+        return (False, str(err))
+
+
 def article_summary_worker(article_queue: queue.Queue, stop_event: threading.Event):
     while not stop_event.is_set():
         if not article_queue.empty():
@@ -236,6 +254,22 @@ def article_summary_worker(article_queue: queue.Queue, stop_event: threading.Eve
                     if response.status_code != 201:
                         raise Exception("Request Err: failed to add Article Id: %s summary to database" % article.article_id)
                     print("Added Summarized Article of Id: %s to database" % article.article_id )
+
+                    # the summary id in database, needed for posting the summary through twitter bot
+                    summary_id = int(response.content)
+
+                    while True:
+                        result, Err = post_summary(summary_id)
+                        if result and Err == "":
+                            print("\nSuccessfully Posted through Twitter\nSummary Id: %s, Tile: %s", summary_id, article.article_title)
+                            break
+                        elif result and Err != "":
+                            print(Err)
+                            break
+                        else:
+                            print("Unsuccessful While Posting through Twitter\nErr: %s" % Err)
+                            break
+
                     # update article status unsummarized
                     while not update_article_status_summarized(article):
                         time.sleep(0.5) # wait 0.5 sec before every RETRY
@@ -272,14 +306,14 @@ if __name__ == "__main__":
             while True:
                 # if queue size > 30 wait 5sec and continue
                 if not article_queue._qsize() < 5:
-                    print("QUEUE: Queue full trying after 5sec")
-                    time.sleep(1.0 * 5)
+                    print("QUEUE: Queue full trying after 20sec")
+                    time.sleep(1.0 * 20)
                     continue
 
                 unsummarized_article: Article = get_unsummarized_article()
                 print("Got One unsummarized Article with Id: %s" % unsummarized_article.article_id)
                 if unsummarized_article.null_init():
-                    time.sleep(1.0 * 1) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
+                    time.sleep(1.0 * 2) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
                     continue
 
                 # Not needed due to error handeling in update_article_status_pending function
