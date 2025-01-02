@@ -1,13 +1,13 @@
 import os
 import json
-import redis
+# import redis
 import requests
 from typing import Self
 from tweepy import Client, TooManyRequests
 from flask import Flask, request
 
 # init the redis redis_database
-redis_database = redis.Redis(host="localhost", port=6379, decode_responses=True)
+# redis_database = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 # for Newz_gen account
 API_Key = os.environ.get("API_KEY")
@@ -41,15 +41,14 @@ def format_summary(summary: Summary) -> str:
     # check if this summary is valid, id id == -1 it is invalid
     if summary.summary_id == -1:
         return "Invalid"
-    
+
     # remove ** form the generated summary
     generated_summary_list: list = [lines.replace("*", "") for lines in summary.generated_summary.splitlines() if lines != ""]
-    
+
     # remove the dentene containing consise of summary substring as it is not needed
     if "concise" in generated_summary_list[0] or "summary" in generated_summary_list[0]:
         generated_summary_list.pop(0)
 
-    print(generated_summary_list)
     return "\n".join(generated_summary_list)
 
 # Database routes
@@ -79,8 +78,10 @@ def post_summary():
         summary = Summary.new(json.loads(response.content))
         formatted_summary = format_summary(summary)
 
-        twitter_post = client.create_tweet(text=formatted_summary)
-        print(twitter_post.data["id"])
+        if formatted_summary.__len__() <= 280:
+            client.create_tweet(text=formatted_summary)
+        else:
+            raise Exception(f'Summary Length More than 280 Words: Summary Len: formatted_summary.__len__()')
 
         return (formatted_summary, 201)
 
@@ -89,8 +90,8 @@ def post_summary():
         return (str(Err), 429)
 
     except Exception as err:
-        print("Error: %s" % str(err))
-        return (str(err),401)
+        print("[Error] %s" % str(err))
+        return (str(err), 401)
 
 if __name__ == "__main__":
     app.run(port=9300, debug=True, load_dotenv=True)
