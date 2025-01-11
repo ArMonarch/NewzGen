@@ -1,0 +1,29 @@
+Pure Llama3.1 Rouge Evaluation
+rouge-1: [ r : 0.7751 ,p : 0.1151, f : 0.1942 ]
+rouge-2: [ r : 0.3676 ,p : 0.0391, f : 0.0681 ]
+rouge-l: [ r : 0.7409 ,p : 0.1104, f : 0.1861 ]
+
+Pure Llama3.2 Rouge Evaluation
+rouge-1: [ r : 0.7682 ,p : 0.1082, f : 0.1844 ]
+rouge-2: [ r : 0.3707 ,p : 0.0355, f : 0.0626 ]
+rouge-l: [ r : 0.7272 ,p : 0.1018, f : 0.1737 ]
+
+Llama3.1 based Model
+rouge-1: [ r : 0.7244 ,p : 0.0805, f : 0.1410 ]
+rouge-2: [ r : 0.3066 ,p : 0.0231, f : 0.0417 ]
+rouge-l: [ r : 0.6751 ,p : 0.0747, f : 0.1308 ]
+
+Llama3.2 based Model
+rouge-1: [ r : 0.7114 ,p : 0.0667, f : 0.1191 ]
+rouge-2: [ r : 0.3237 ,p : 0.0195, f : 0.0359 ]
+rouge-l: [ r : 0.6706 ,p : 0.0629, f : 0.1123 ]
+
+Llama3.1 based Model With hyperparameter tweaking
+rouge-1: [ r : 0.7446 ,p : 0.0743, f : 0.1317 ]
+rouge-2: [ r : 0.3240 ,p : 0.0208, f : 0.0382 ]
+rouge-l: [ r : 0.7022 ,p : 0.0698, f : 0.1239 ]
+
+Llama3.2 based Model With hyperparameter tweaking
+rouge-1: [ r : 0.7372 ,p : 0.0661, f : 0.1186 ]
+rouge-2: [ r : 0.3169 ,p : 0.0173, f : 0.0320 ]
+rouge-l: [ r : 0.6940 ,p : 0.0612, f : 0.1101 ]
