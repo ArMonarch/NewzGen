@@ -198,7 +198,13 @@ def gen_summary(article: Article) -> (str | None):
         # variable that stores generated summary
         genrated_summary: str = ""
         # handle generated summary stream
-        payload = {"model": SUMMARY_MODEL, "prompt": article_as_prompt}
+        
+        # inference-time hyperparameters as options
+        options = {"temperature": 0.35, "num_predict": 50, "repeat_penalty": 1.15, "top_k": 50, "top_p": 0.8, "microstat": 2, "mirostat_tau": 5.0  }
+        # payload for the model (prompt, model_name, etc)
+        # payload = {"model": SUMMARY_MODEL, "prompt": article_as_prompt, "options": {} }
+        payload = {"model": SUMMARY_MODEL, "prompt": article_as_prompt, "options":options}
+
         with requests.post(OllamaAPIs.GENERATE_SUMMARY, json=payload, stream=True) as gen_summary:
             # check for HTTP error and raise Exception
             gen_summary.raise_for_status()
@@ -311,11 +317,11 @@ if __name__ == "__main__":
                     continue
 
                 unsummarized_article: Article = get_unsummarized_article()
-                print("Got One unsummarized Article with Id: %s" % unsummarized_article.article_id)
                 if unsummarized_article.null_init():
                     time.sleep(1.0 * 2) # sleep for 60 sec as mostly there is no unsummarized_article OR got video Article and start next iteration
                     continue
 
+                print("Got One unsummarized Article with Id: %s" % unsummarized_article.article_id)
                 # Not needed due to error handeling in update_article_status_pending function
                 # it directly jumps to except portion
                 # change the unsummarized_article status to pending
