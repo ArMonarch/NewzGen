@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, request_started
 from typing import Dict
 import json
 import sqlite3
@@ -66,7 +66,7 @@ def getArticle():
         if DATA.get('article_id') != None:
             Article = cursor.execute(GET_ARTICLE_WITH_ID,{'article_id': int(DATA.get('article_id'))})
             ID, TYPE, AUTHORS, TITLE, TOPICS, BODY, PUBLISHEDDATE, SOURCE, URL, SUMMARIZEDSTATUS = Article.fetchone()
-            
+
 
         elif DATA.get('title') != None:
             Article = cursor.execute(GET_ARTICLE_WITH_TITLE,{'title': str(DATA.get('title'))})
@@ -177,6 +177,33 @@ def getArticleSummary():
     except Exception as e:
         return (str(e), 401)
     
+@api.route("/get/eval/article-summary", methods=["GET"])
+def get_articel_summary():
+    try:
+        article_id: int = int(request.args["article_id"]) if request.args.get("article_id") else -1
+
+        # Connect to database to get article data
+        databaseConnection = sqlite3.connect(DATABASE_PATH)
+        cursor = databaseConnection.cursor()
+
+        summaries = cursor.execute(GET_SUMMARY_WITH_ARTICLEID, {"article_id": article_id})
+        summaries = summaries.fetchall()
+        return_summaries = dict()
+        list_index = ["llama3.1_without", "llama3.1_with", "llama3.1", "llama3.2", "llama3.2_without", "llama3.2_with"]
+        for (index, value) in zip(list_index, summaries):
+            summary: str = value[3]
+            summary_lines: list = [ line.replace("**", "") for line in summary.splitlines() if line != "" ]
+
+            if "summary" in summary_lines[0]:
+                summary_lines.pop(0)
+
+            return_summaries.update({f"{index}": "".join(summary_lines)})
+
+        return ({"article_summary": return_summaries}, 201)
+
+    except Exception as err:
+        return (str(err), 401)
+
 @api.route("/get/unsummarized/article", methods=["GET"])
 def getOneUnsummarizedArticle():
     try:
