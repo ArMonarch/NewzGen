@@ -24,6 +24,9 @@ def get_article(article_id: int) -> str:
             raise Exception("Request Err: Failed to fetch article")
 
         article = json.loads(response.content)
+        if "video" in  article["type"]:
+            # print("\n", article['id'])
+            return "Err"
         return article["body"]
 
     except Exception as err:
