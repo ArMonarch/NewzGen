@@ -35,7 +35,7 @@ stopEvent = threading.Event()
 # DATABASE_SERVER.start()
 
 class Newz_Server():
-    NEWZ_SCRAPPER_SERVER = 'http://127.0.0.1:9400'
+    NEWZ_SCRAPPER_SERVER = "http://127.0.0.1:9400"
 
     def __init__(self):
         pass
