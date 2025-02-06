@@ -2,148 +2,207 @@ import time
 import queue
 import schedule
 import threading
-# import os
-# import subprocess
-# from datetime import datetime
 import requests
 import json
-from typing import Dict, List
+from typing import Dict, Callable
 
-# this code contains the main loop of the progeam that regulates all the sub server
+# Reduce the topics for scraping
+TOPICS : list[str] = ["us-canada", "uk", "asia", "australia", "europe", "science-health", "technology"]
 
-# Create a queue to hold jobs
-Queue = queue.Queue()
+class RequestError(Exception):
+    def __init__(self, message: str) -> None:
+        super.__init__(message)
+        self.message = message
 
-# This event will be used to signal the worker thread to stop
-stopEvent = threading.Event()
+    def __str__(self) -> str:
+        return f'Request Error: {self.message}'
 
-# TODO: Start all the modules from this file
-# runnung this file automatically starts Database, News_Scrapper, LLM_Ollama, Twitter_Bot as Thread
-
-# # Get current working directory
-# CURRENT_DIRECTORY = os.getcwd()
-
-# # run Database Server
-# DATABASE_DIRECTORY = os.path.join(CURRENT_DIRECTORY,'SQLite_Database_Server')
-
-# def Database_Server():
-#     EXECUTABLE = os.path.join(DATABASE_DIRECTORY,'main.py')
-#     print(EXECUTABLE)
-#     subprocess.run(f'{CURRENT_DIRECTORY}/venv/bin/python {EXECUTABLE}')
-
-# DATABASE_SERVER = threading.Thread(target=Database_Server())
-# DATABASE_SERVER.start()
-
-class Newz_Server():
-    NEWZ_SCRAPPER_SERVER = 'http://127.0.0.1:9400'
+class Newz_Gen():
+    NEWZ_SCRAPPER_BASEAPI = 'http://127.0.0.1:9400'
 
     def __init__(self):
         pass
 
-    def getArticle(self, topic) -> Dict:
-        API = f'{self.NEWZ_SCRAPPER_SERVER}/api/bbc/get/article'
-        request = requests.get(url=API, params={'topic':topic})
-        if request.status_code != 201:
-            raise Exception('REQUESTS ERROR: Failed to Fetch Data')
-        DATA : Dict = json.loads(request.content)
-        return DATA
+    def get_article(self, topic = "technology") -> Dict | None :
+        # assert topic is str && in TOPICS
+        assert isinstance(topic, str)
+        assert topic in TOPICS
 
-    def getArticles(self, topic, size : int = 1) -> List[Dict]:
-        API = f'{self.NEWZ_SCRAPPER_SERVER}/api/bbc/get/articles'
-        request = requests.get(url=API, params={'topic':topic, 'size':size})
-        if request.status_code != 201:
-            raise Exception('REQUESTS ERROR: Failed to Fetch Data')
-        DATA = json.loads(request.content)
-        return DATA
-    
-    def getArticleId(self,articleNo, topic) -> dict:
-        API = f'{self.NEWZ_SCRAPPER_SERVER}/api/bbc/get/article'
-        request = requests.get(url=API, params={'page':articleNo,'topic':topic})
-        if request.status_code != 201:
-            raise Exception('REQUESTS ERROR: Failed to Fetch Data')
-        DATA : dict = json.loads(request.content)
-        return DATA
-    
-def insert_Article(DATA : dict) -> None :
-    API = f'http://127.0.0.1:9200/api/add/article'
-    request = requests.post(url=API, json=DATA)
-    if request.status_code != 201:
-        raise Exception('REQUESTS ERROR: Failed to Post Data')
-    return
+        GET_ARTICLE_API = f"{self.NEWZ_SCRAPPER_BASEAPI}/api/bbc/get/articles"
+        try:
+            response = requests.get(url=GET_ARTICLE_API, params={"topic": topic, "size": 1})
+            if response.status_code != 201:
+                raise RequestError("Failed to get latest Article")
+            return json.loads(response.content)
 
-def find_Article(title : str) -> (dict | None) :
-    API = f'http://127.0.0.1:9200/api/get/article'
-    request = requests.post(url=API, json={'title':title})
+        except (RequestError, Exception) as Err:
+            print(f'{str(Err)}')
+            return None
 
-    if request.status_code == 404:
-        return None
-    elif request.status_code != 201:
-        raise Exception('REQUESTS ERROR: Failed to Get Article')
+    def get_articles(self,size: int, topic: str = "technology") -> Dict | None :
 
-    return json.loads(request.content)
+        # assert topic is str && in TOPICS
+        assert isinstance(topic, str)
+        assert topic in TOPICS
 
-def database_isEmpty() -> bool:
-    API = f'http://127.0.0.1:9200/api/database/empty'
-    request = requests.get(API)
-    if request.status_code != 201:
-        raise Exception('REQUESTS ERROR: Failed to Check Database Status')
-    status = False if str(request.text) != 'True' else True
-    return status
+        # assert size isinstance of int && size > 1 & size < 100
+        assert isinstance(size, int)
+        assert size < 100 and size > 0
 
-# TOPICS : list[str] = ["us-canada", "uk", "africa", "asia", "australia", "europe", "latin-america", "middle-east", "science-health", "technology", "ai-news"]
-# Reduce the topics for scraping
-TOPICS : list[str] = ["us-canada", "uk", "asia", "australia", "europe", "science-health", "technology"]
+        GET_ARTICLES_API = f"{self.NEWZ_SCRAPPER_BASEAPI}/api/bbc/get/articles"
+        try:
+            response = requests.get(url=GET_ARTICLES_API, params={"topic":topic, "size": size})
+            if response.status_code != 201:
+                raise RequestError("Failed to get Latest Articles")
+            return json.loads(response.content)
 
-def main():
-    News = Newz_Server()
-    Article : dict
+        except (RequestError, Exception) as Err:
+            print(f'{str(Err)}')
+            return None
 
+    def get_article_id(self, topic: str, article_no: int)-> Dict | None :
+
+        # assert topic is str && in TOPICS
+        assert isinstance(topic, str)
+        assert topic in TOPICS
+
+        # assert article_no isinstance of int && article_no > 1 & article_no < 100
+        assert isinstance(article_no, int)
+        assert article_no < 100 and article_no >= 0
+
+        GET_ARTICLE_WITH_ID_API = f'{self.NEWZ_SCRAPPER_BASEAPI}/api/bbc/get/article'
+        try:
+            response = requests.get(url=GET_ARTICLE_WITH_ID_API, params={"topic": topic, "page": article_no, "size": 1})
+            if response.status_code != 201:
+                raise RequestError(f'Failed to get Article of ID {article_no}')
+            return json.loads(response.content)
+
+        except (RequestError, Exception) as Err:
+            print(f'{str(Err)}')
+            return None
+
+class Database():
+    DATABASE_BASEAPI = "http://127.0.0.1:9200"
+    DATABASE_INSERT_ARTICLE = f'{DATABASE_BASEAPI}/api/add/article'
+    DATABASE_FIND_ARTICLE = f'{DATABASE_BASEAPI}/api/get/article'
+    DATABASE_EMPTY = f'{DATABASE_BASEAPI}/api/database/empty'
+
+    def __init__(self) -> None:
+        pass
+
+    def empty(self) -> bool | None :
+
+        try:
+            response = requests.get(url=self.DATABASE_EMPTY)
+            if response.status_code != 201:
+                raise RequestError("Failed to check Databse Status")
+            status : bool = False if str(response.text) != "True" else True
+            return status
+        except (RequestError, Exception):
+            return None
+
+    def find_article(self, article_title: str) -> bool | None :
+
+        # assert title is str
+        assert isinstance(article_title, str)
+
+        try:
+            response = requests.post(url=self.DATABASE_FIND_ARTICLE, json={"title": article_title})
+            if response.status_code != 201 and response.status_code != 404:
+                raise RequestError("Failed to Find Article in Database")
+            if response.status_code == 404:
+                return False
+            else:
+                return True
+
+        except (RequestError, Exception) as Err:
+            print(f'{str(Err)}')
+            return None
+
+    def insert_article(self, Article: Dict) -> bool | None :
+ 
+        # assert that the Article is Dict
+        assert isinstance(Article, Dict)
+        # TODO: assert the Article contatin (title, body, ...)
+        assert True
+
+        try:
+            response = requests.post(url=self.DATABASE_INSERT_ARTICLE, json=Article)
+            if response.status_code != 201:
+                raise RequestError("Failed to Post Article")
+            return True
+        except (RequestError, Exception) as Err:
+            print(f'{str(Err)}')
+            return None
+
+def main() -> None:
     for topic in TOPICS:
-        for i in range(0,99):
+        # iterate through 0 to  100
+        for index in range(0,100):
             try:
-                Article = News.getArticleId(articleNo=i, topic=topic)
-                article_title: str = str(Article.get("title"))
+                found:bool = False
 
-                print(f'Got {topic} News, Article : {Article.get('title')}, Number ID {i+1}')
-                if not find_Article(article_title):
-                    insert_Article(Article)
-                    print(f'Inserted {topic} News, Number ID {i+1}')
+                while True:
+                    Article = Newz_Gen().get_article_id(topic=topic, article_no=index)
+                    if Article == None:
+                        print("Article Err: Wait 3 Sec and Trying ...")
+                        time.sleep(1 * 3)
+                        continue
 
-                else:
+                    # assert that article is not none
+                    assert isinstance(Article, Dict), "Is the News_Scrapper Server Running"
+
+                    print(f'Got {topic} News, Article : {Article["title"]}, Number ID {index+1}')
+
+                    article_found = Database().find_article(Article["title"])
+                    if article_found == None:
+                        print("Database Err: Wait 3 Sec and Trying...")
+                        time.sleep(1 * 3)
+                        continue
+
+                    # assert article_found is bool
+                    assert isinstance(article_found, bool), "Is the Database Server Running?"
+                    if not article_found:
+                        if Database().insert_article(Article) == None:
+                            print("Wait 3 Sec and Trying...")
+                            time.sleep(1 * 3)
+                            continue
+                        print(f'Inserted {topic} News, Article : {Article["title"]}, Number ID {index+1}')
+                    else:
+                        found = True
+
+                    break
+                # exit range loop if articel is found in database else insert into databas
+                # We dont need older news
+                if found:
                     break
 
-            except Exception as e:
-                print(str(e))
+            except Exception:
+                pass
 
-    return
+# Run the Main  job every 10 Mins
 
-def WorkerMain(Queue: queue.Queue, StopEvent: threading.Event):
-    while not StopEvent.is_set():
-        if not Queue.empty():
-            Process = Queue.get()
-            Process()
+# Create a queue to hold jobs
+Queue: queue.Queue[Callable] = queue.Queue()
+
+# This event will be used to signal the worker thread to stop
+stopEvent = threading.Event()
+
+def queue_worker(Queue: queue.Queue[Callable], stop_event: threading.Event):
+    while not stop_event.is_set():
+        while not Queue.empty():
+            main_function = Queue.get()
+            main_function()
             Queue.task_done()
-        time.sleep(0.5)
+        time.sleep(1 * 0.5)
 
 if __name__ == "__main__":
+    # schedule main too queue every 10 Mins
+    schedule.every(1).seconds.do(Queue.put, main)
 
-    try:
-        DATABASE_EMPTY : bool = database_isEmpty()
-        # if database is empty populate the database with 10 articles
-        if DATABASE_EMPTY:
-            Articles = Newz_Server().getArticles(topic="technology",size=100)
-            for Article in Articles:
-                insert_Article(Article)
-            print("Finished populating the database with articles")
-
-    except Exception as e:
-        print(str(e))
-
-    Queue.put(main)
-    schedule.every(30).minutes.do(Queue.put,main)
-
-    Thread = threading.Thread(target=WorkerMain, args=(Queue, stopEvent))
-    Thread.start()
+    # start the queue_worker thread
+    Queue_Worker_Thread = threading.Thread(target=queue_worker, args=(Queue, stopEvent))
+    Queue_Worker_Thread.start()
 
     try:
         while True:
@@ -159,4 +218,4 @@ if __name__ == "__main__":
         stopEvent.set()
 
     finally:
-        Thread.join()
+        Queue_Worker_Thread.join()
