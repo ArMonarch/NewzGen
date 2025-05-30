@@ -20,10 +20,10 @@ def main() -> None:
 
         cursor.close()
         connect.close()
-    
+ 
     except sqlite3.Error as e:
         print("An error occured during Database Connection or Table Creation", str(e))
-    
+ 
     return
 
 if __name__ == "__main__":

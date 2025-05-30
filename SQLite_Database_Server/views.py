@@ -15,9 +15,9 @@ def Article_Insert() -> str:
     try:
         if request.method != 'POST':
             raise Exception('METHOD ERROR: route only supports POST method')
-        
+
         DATA : dict = dict(json.loads(request.data))
-    
+
         connection = sqlite3.connect(DATABASE_PATH)
         cursor = connection.cursor()
 
@@ -48,7 +48,7 @@ def Article_Insert() -> str:
     except Exception as e:
         print(e)
         return (str(e),401)
-         
+
 # functional route to get a single id with Id & Title = -----------
 @api.route('/get/article',methods=['POST'])
 def getArticle():

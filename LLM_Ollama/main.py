@@ -1,11 +1,9 @@
-import datetime
 import json
 import queue
 import threading
 import time
-from typing import Self
-
 import requests
+from typing_extensions import Self
 
 # Database Routes
 class DATABASE():
@@ -198,7 +196,7 @@ def gen_summary(article: Article) -> (str | None):
         # variable that stores generated summary
         genrated_summary: str = ""
         # handle generated summary stream
-        
+
         # inference-time hyperparameters as options
         options = {"temperature": 0.35, "num_predict": 50, "repeat_penalty": 1.15, "top_k": 50, "top_p": 0.8, "microstat": 2, "mirostat_tau": 5.0  }
         # payload for the model (prompt, model_name, etc)

@@ -136,8 +136,10 @@ class Database():
             return None
 
 def main() -> None:
+
+    # iterate through all the TOPICS
     for topic in TOPICS:
-        # iterate through 0 to  100
+        # iterate through 0 to 100
         for index in range(0,100):
             try:
                 found:bool = False
@@ -172,6 +174,7 @@ def main() -> None:
                         found = True
 
                     break
+
                 # exit range loop if articel is found in database else insert into databas
                 # We dont need older news
                 if found:
@@ -197,8 +200,8 @@ def queue_worker(Queue: queue.Queue[Callable], stop_event: threading.Event):
         time.sleep(1 * 0.5)
 
 if __name__ == "__main__":
-    # schedule main too queue every 10 Mins
-    schedule.every(1).seconds.do(Queue.put, main)
+    # schedule main too queue every 10 Sec
+    schedule.every(10).seconds.do(Queue.put, main)
 
     # start the queue_worker thread
     Queue_Worker_Thread = threading.Thread(target=queue_worker, args=(Queue, stopEvent))
